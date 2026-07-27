@@ -18,5 +18,8 @@
     ,"src/mrge/filters": {"origin": "clean-room research reimplementation from public contracts and project behavior", "license": "AGPL-3.0-only"}
     ,"src/mrge/preview": {"origin": "clean-room research reimplementation from public contracts and project behavior", "license": "AGPL-3.0-only"}
     ,"docs/algorithms/ORIGINAL_PREVIEW_FILTERS.md": {"origin": "new algorithm provenance documentation", "license": "AGPL-3.0-only"}
+    ,"contracts/geometry_profile.schema.json": {"origin": "new coordinate-neutral public contract", "license": "Apache-2.0"}
+    ,"src/mrge/geometry": {"origin": "new profile-driven clean-room geometry implementation", "license": "AGPL-3.0-only"}
+    ,"docs/architecture/GEOMETRY_PROFILES.md": {"origin": "new geometry variation documentation", "license": "AGPL-3.0-only"}
   }
 }

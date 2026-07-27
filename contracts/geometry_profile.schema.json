@@ -1,0 +1,18 @@
+{
+  "SPDX-License-Identifier": "Apache-2.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MRGE Geometry Profile v1",
+  "type": "object",
+  "required": ["schema_version", "profile_id", "world_frame_id", "anchor_mode", "sensor_layout", "authority"],
+  "properties": {
+    "schema_version": {"const": "mrge.geometry_profile.v1"},
+    "profile_id": {"type": "string"},
+    "world_frame_id": {"type": "string"},
+    "anchor_mode": {"enum": ["foot_point", "sensor_center", "custom_anchor"]},
+    "sensor_layout": {"enum": ["four_sides_inward", "parallel_wall", "custom"]},
+    "calibration_id": {"type": ["string", "null"]},
+    "sensors": {"type": "array"},
+    "authority": {"const": "research-only"}
+  },
+  "additionalProperties": true
+}
