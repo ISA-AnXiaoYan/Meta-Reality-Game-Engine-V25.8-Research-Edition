@@ -1,0 +1,12 @@
+{
+  "edition": "V25.8 Research Edition",
+  "release_state": "R5-pre-R6",
+  "qualification_claimed": false,
+  "field_effectiveness_validated": false,
+  "production_cutover": false,
+  "real_hardware_adapters_included": false,
+  "real_data_included": false,
+  "model_weights_included": false,
+  "authority": "research-only",
+  "historical_reference": "v25.8.5-platform"
+}

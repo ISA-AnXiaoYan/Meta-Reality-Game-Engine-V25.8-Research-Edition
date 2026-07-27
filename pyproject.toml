@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "meta-reality-game-engine-research"
+version = "25.8.0.dev0"
+description = "Meta-Reality Game Engine V25.8 Research Edition"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0-only" }
+authors = [{ name = "ISA-AnXiaoYan" }]
+dependencies = []
+
+[project.scripts]
+mrge = "mrge.cli.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

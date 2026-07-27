@@ -1,0 +1,10 @@
+{
+  "schema_version": "1",
+  "edition": "V25.8-Research-Edition",
+  "source_policy": "clean-room research scaffold; no historical runtime source copied",
+  "files": {
+    "contracts.py": {"origin": "new", "license": "Apache-2.0"},
+    "replay/jsonl.py": {"origin": "new", "license": "Apache-2.0"},
+    "src/mrge": {"origin": "new", "license": "AGPL-3.0-only"}
+  }
+}
