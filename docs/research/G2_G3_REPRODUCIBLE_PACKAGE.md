@@ -15,6 +15,7 @@
 - `mrge replay`：重放 JSONL，同时明确 `terminal_state=replayed` 和 `official_result=false`。
 - Replay fault injection：显式覆盖缺帧、重复帧、乱序、过期 Polygon 和 Event 空流。
 - `InferenceBackend`、Visible/Event Adapter 与 `GameBridge` Protocol：允许后续插件替换实现，默认不打开硬件或网络。
+- `mrge report`：从 Replay 一键生成 Sync、Polygon、World State、Hit Candidate 和 BEV 静态研究报告。
 - `ResultEnvelope`：把候选结果、终态和权威布尔值放在同一个稳定契约中。
 
 ## 当前未声称
@@ -31,6 +32,7 @@ mrge validate
 mrge simulate --frames 2
 mrge generate-sample --output .\tmp-sample.jsonl
 mrge replay --input .\tmp-sample.jsonl
+mrge report --input .\tmp-sample.jsonl --output .\tmp-reports
 ```
 
 生成的样例只用于研究和回放测试，不应作为现场效果或资格证明。
