@@ -21,5 +21,8 @@
     ,"contracts/geometry_profile.schema.json": {"origin": "new coordinate-neutral public contract", "license": "Apache-2.0"}
     ,"src/mrge/geometry": {"origin": "new profile-driven clean-room geometry implementation", "license": "AGPL-3.0-only"}
     ,"docs/architecture/GEOMETRY_PROFILES.md": {"origin": "new geometry variation documentation", "license": "AGPL-3.0-only"}
+    ,"research/geometry_profiles": {"origin": "new public geometry profiles", "license": "Apache-2.0"}
+    ,"research/variants": {"origin": "new research variant governance and status templates", "license": "AGPL-3.0-only"}
+    ,"docs/releases/PRE_V27_ORIGINAL_CODE_ROLLOUT.md": {"origin": "new rollout documentation", "license": "AGPL-3.0-only"}
   }
 }

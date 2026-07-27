@@ -1,0 +1,11 @@
+{
+  "SPDX-License-Identifier": "Apache-2.0",
+  "schema_version": "mrge.geometry_profile.v1",
+  "profile_id": "sensor_center_parallel_v1",
+  "world_frame_id": "arena_v1",
+  "anchor_mode": "sensor_center",
+  "sensor_layout": "parallel_wall",
+  "calibration_id": null,
+  "sensors": ["wall_a", "wall_b"],
+  "authority": "research-only"
+}

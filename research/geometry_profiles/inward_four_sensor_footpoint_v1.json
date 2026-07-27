@@ -1,0 +1,11 @@
+{
+  "SPDX-License-Identifier": "Apache-2.0",
+  "schema_version": "mrge.geometry_profile.v1",
+  "profile_id": "inward_four_sensor_footpoint_v1",
+  "world_frame_id": "arena_v1",
+  "anchor_mode": "foot_point",
+  "sensor_layout": "four_sides_inward",
+  "calibration_id": null,
+  "sensors": ["north", "east", "south", "west"],
+  "authority": "research-only"
+}
