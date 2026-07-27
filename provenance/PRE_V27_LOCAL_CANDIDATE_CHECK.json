@@ -1,0 +1,22 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-only",
+  "schema_version": "mrge.pre_v27_local_candidate_check.v1",
+  "status": "LOCAL_CANDIDATE_PASS_INDEPENDENT_G5_PENDING",
+  "checked_at": "2026-07-28",
+  "checks": {
+    "python_compileall": "PASS",
+    "synthetic_2_camera": "PASS",
+    "synthetic_8_camera": "PASS",
+    "replay_fault_injection": "PASS",
+    "preview_filter_clean_room": "PASS",
+    "geometry_profiles": "PASS",
+    "research_reports": "PASS",
+    "spdx_secret_absolute_path_data_weight_scan": "PASS"
+  },
+  "tracked_files": 90,
+  "independent_environment": false,
+  "external_license_review": false,
+  "production_authority": false,
+  "qualification_claimed": false,
+  "next_gate": "G5_INDEPENDENT_ENVIRONMENT_AND_LICENSE_REVIEW"
+}

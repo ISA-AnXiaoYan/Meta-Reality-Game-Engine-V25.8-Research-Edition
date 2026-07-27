@@ -24,5 +24,6 @@
     ,"research/geometry_profiles": {"origin": "new public geometry profiles", "license": "Apache-2.0"}
     ,"research/variants": {"origin": "new research variant governance and status templates", "license": "AGPL-3.0-only"}
     ,"docs/releases/PRE_V27_ORIGINAL_CODE_ROLLOUT.md": {"origin": "new rollout documentation", "license": "AGPL-3.0-only"}
+    ,"provenance/PRE_V27_LOCAL_CANDIDATE_CHECK.json": {"origin": "local candidate verification record", "license": "AGPL-3.0-only"}
   }
 }
