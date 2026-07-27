@@ -9,5 +9,6 @@
     ,"contracts/recording_bundle.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
     ,"contracts/polygon_gate.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
     ,"contracts/ir_id.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
+    ,"tools/build_synthetic_sample.py": {"origin": "new deterministic generator", "license": "AGPL-3.0-only"}
   }
 }

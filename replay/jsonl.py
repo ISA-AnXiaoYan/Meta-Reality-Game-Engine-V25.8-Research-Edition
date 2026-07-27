@@ -8,7 +8,7 @@ from typing import Any
 
 
 def write(path: str | Path, rows: Iterable[dict[str, Any]]) -> None:
-    Path(path).write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+    Path(path).write_text("".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in rows), encoding="utf-8")
 
 
 def read(path: str | Path) -> Iterator[dict[str, Any]]:
