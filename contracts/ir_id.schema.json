@@ -1,0 +1,15 @@
+{
+  "SPDX-License-Identifier": "Apache-2.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MRGE IR-ID Player State Candidate v1",
+  "type": "object",
+  "required": ["player_id", "identity_state", "authority"],
+  "properties": {
+    "player_id": {"type": "string"},
+    "identity_state": {"enum": ["unknown", "candidate", "confirmed", "rejected"]},
+    "markers": {"type": "array"},
+    "reid_score": {"type": ["number", "null"]},
+    "authority": {"const": "shadow"}
+  },
+  "additionalProperties": true
+}

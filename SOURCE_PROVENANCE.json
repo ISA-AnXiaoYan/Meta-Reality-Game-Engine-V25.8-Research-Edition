@@ -6,5 +6,8 @@
     "contracts.py": {"origin": "new", "license": "Apache-2.0"},
     "replay/jsonl.py": {"origin": "new", "license": "Apache-2.0"},
     "src/mrge": {"origin": "new", "license": "AGPL-3.0-only"}
+    ,"contracts/recording_bundle.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
+    ,"contracts/polygon_gate.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
+    ,"contracts/ir_id.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
   }
 }

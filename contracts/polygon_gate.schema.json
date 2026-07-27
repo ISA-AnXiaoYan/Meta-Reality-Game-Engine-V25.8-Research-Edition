@@ -1,0 +1,16 @@
+{
+  "SPDX-License-Identifier": "Apache-2.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MRGE Polygon Gate Candidate v1",
+  "type": "object",
+  "required": ["gate_state", "camera_id", "frame_index", "authority"],
+  "properties": {
+    "gate_state": {"enum": ["pass", "fail", "fail_open", "unknown"]},
+    "camera_id": {"type": "string"},
+    "frame_index": {"type": "integer", "minimum": 0},
+    "polygon": {"type": "array"},
+    "authority": {"const": "candidate"},
+    "reason": {"type": "string"}
+  },
+  "additionalProperties": true
+}

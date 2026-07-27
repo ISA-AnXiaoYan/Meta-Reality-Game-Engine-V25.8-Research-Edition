@@ -3,6 +3,7 @@ from mrge.adapters.synthetic import frames
 from mrge.contracts import Frame, HitCandidate
 from mrge.engine.pipeline import process, run
 from mrge.perception.fake import FakeBackend
+from mrge.adapters import NullAdapter
 
 
 def test_synthetic_pipeline_is_candidate_only():
@@ -30,3 +31,7 @@ def test_every_input_has_terminal_research_state():
     assert len(envelopes) == 2
     assert all(item.terminal_state == "candidate_emitted" for item in envelopes)
     assert all(item.official_result is False for item in envelopes)
+
+
+def test_null_adapter_does_not_open_hardware():
+    assert list(NullAdapter().frames()) == []
