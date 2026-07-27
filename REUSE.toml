@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+version = 1
+
+[licenses]
+expression = "AGPL-3.0-only"
+
+[annotations]
+"contracts/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }
+"replay/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }
+"src/replay/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }

@@ -1,0 +1,5 @@
+Apache License, version 2.0 (Apache-2.0)
+
+The canonical full text for Apache-licensed Contracts and Replay files is
+LICENSE-APACHE-2.0.txt at the repository root. This path is provided for
+REUSE and per-file license tooling; it does not add additional permissions.

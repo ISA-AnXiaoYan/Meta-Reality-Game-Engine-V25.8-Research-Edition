@@ -1,0 +1,5 @@
+GNU Affero General Public License, version 3 (AGPL-3.0-only)
+
+The canonical full text for this repository is the root LICENSE file. This
+path is provided for REUSE and per-file license tooling; it intentionally
+refers to the same license text and does not add additional permissions.
