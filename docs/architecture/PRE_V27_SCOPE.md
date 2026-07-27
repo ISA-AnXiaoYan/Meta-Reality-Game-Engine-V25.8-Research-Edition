@@ -22,3 +22,5 @@
 ## 当前状态
 
 G7 已冻结候选来源和排除项；G8 尚未完成逐文件原创性/许可证复核。在 G8 通过前，不得从历史 checkout 批量复制源码到公开主线。
+
+当前 hash-only inventory 共 2,857 条：1,311 条 V27 reference-only、1,536 条待原创性/许可证复核、10 条因 proprietary/private/vendor/secret 命名被阻断。inventory 不包含源码内容，也不代表任何条目已经获准迁移。

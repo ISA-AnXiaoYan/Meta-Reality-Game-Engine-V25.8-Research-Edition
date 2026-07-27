@@ -13,5 +13,7 @@
     ,"provenance/PRE_V27_CUTOFF_MANIFEST.json": {"origin": "new audit boundary record", "license": "AGPL-3.0-only"}
     ,"provenance/ORIGINALITY_CLASSIFICATION.csv": {"origin": "new audit classification", "license": "AGPL-3.0-only"}
     ,"docs/architecture/PRE_V27_SCOPE.md": {"origin": "new scope documentation", "license": "AGPL-3.0-only"}
+    ,"provenance/PRE_V27_FILE_INVENTORY.csv": {"origin": "hash-only source inventory generated from approved audit roots", "license": "AGPL-3.0-only"}
+    ,"tools/build_pre_v27_inventory.py": {"origin": "new hash-only inventory generator", "license": "AGPL-3.0-only"}
   }
 }
