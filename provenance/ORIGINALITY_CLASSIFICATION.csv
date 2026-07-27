@@ -1,0 +1,7 @@
+source_id,source_root,scope,status,default_disposition,review_required
+v26_b,C:/dev/meta-reality-game-engine-v26-b,recording/polygon/replay/preview/filters/IR-ID,UNREVIEWED,ORIGINALITY_REVIEW_REQUIRED,true
+mrg_v25_historical,C:/dev/mrg-v25,legacy/preview/filters/fusion/replay,UNREVIEWED,CHECKOUT_FREEZE_REQUIRED,true
+v27_clean_runtime_reference,C:/dev/v27-clean-runtime,architecture/provenance/reference,REFERENCE_ONLY,REFERENCE_ONLY_UNLESS_ORIGINALITY_APPROVED,true
+real_runtime_data,external/private,real data/runtime archives,EXCLUDED,PRIVATE_DATA_BOUND,false
+vendor_sdk,external/private,hardware SDK/device handles,EXCLUDED,THIRD_PARTY_BOUND,false
+model_weights,external/private,model weights/private model files,EXCLUDED,PRIVATE_DATA_BOUND,false

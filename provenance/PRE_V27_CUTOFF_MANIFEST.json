@@ -1,0 +1,46 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-only",
+  "schema_version": "mrge.pre_v27_cutoff_manifest.v1",
+  "scope": "all candidate original code and algorithms formed before the V27 implementation boundary",
+  "generated_at": "2026-07-28",
+  "status": "G7_SCOPE_FROZEN_PENDING_FILE_REVIEW",
+  "public_repository": "Meta-Reality-Game-Engine-V25.8-Research-Edition",
+  "sources": [
+    {
+      "source_id": "v26_b",
+      "checkout": "C:/dev/meta-reality-game-engine-v26-b",
+      "commit": "18f453bc887497c73efe3b8ac39ddfe3809b212c",
+      "branch": "patch/v26-b-event-polygon-business-id",
+      "inventory": {"python": 131, "cpp_h": 10, "markdown": 75, "json": 18},
+      "candidate_scope": ["recording", "polygon_gate", "replay", "preview", "filters", "IR-ID"],
+      "default_disposition": "ORIGINALITY_REVIEW_REQUIRED"
+    },
+    {
+      "source_id": "mrg_v25_historical",
+      "checkout": "C:/dev/mrg-v25",
+      "commit": null,
+      "branch": null,
+      "inventory": {"python": 437, "cpp_h": 10, "markdown": 342, "json": 148},
+      "candidate_scope": ["legacy_v25", "preview", "filters", "fusion", "replay", "governance"],
+      "default_disposition": "CHECKOUT_FREEZE_REQUIRED"
+    },
+    {
+      "source_id": "v27_clean_runtime_reference",
+      "checkout": "C:/dev/v27-clean-runtime",
+      "commit": "f577f0da1ca9cf215250d05923ecba8cd946a977",
+      "branch": "v27/clean-main",
+      "inventory": {"python": 113, "cpp_h": 0, "markdown": 19, "json": 173},
+      "candidate_scope": ["architecture_reference", "provenance_reference", "pre_v27_inherited_patterns"],
+      "default_disposition": "REFERENCE_ONLY_UNLESS_ORIGINALITY_APPROVED"
+    }
+  ],
+  "exclusions": [
+    "real datasets and runtime archives",
+    "camera/event vendor SDKs and device handles",
+    "model weights and private model files",
+    "credentials, serial numbers, personal data and private profiles",
+    "code whose origin or license remains UNKNOWN",
+    "V27 production/field authority code not independently cleared"
+  ],
+  "next_gate": "G8_FILE_LEVEL_ORIGINALITY_AND_LICENSE_REVIEW"
+}
