@@ -30,3 +30,17 @@ class HitCandidate:
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
+
+
+@dataclass(frozen=True)
+class ResultEnvelope:
+    """A terminal research result; never a production verdict."""
+
+    run_id: str
+    epoch_id: str
+    terminal_state: str
+    candidate: HitCandidate
+    official_result: bool = False
+
+    def to_json(self) -> str:
+        return json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))

@@ -10,6 +10,7 @@
 python -m pip install -e .
 mrge validate
 mrge simulate --frames 3
+mrge generate-sample --output .\tmp-sample.jsonl
 mrge replay --input examples/replay.jsonl
 ```
 
