@@ -10,6 +10,8 @@
 - `mrge simulate`：生成候选结果，每个输入帧对应一个 `candidate_emitted` 终态。
 - `mrge generate-sample`：从零生成 JSONL 合成样例。
 - `tools/build_synthetic_sample.py`：以固定字段和排序从零重建样例，便于哈希比较。
+- `examples/quickstart_2cam_synthetic.jsonl`：2 路合成快速样例。
+- `examples/fullchain_8cam_replay.jsonl`：8 路回放链样例。
 - `mrge replay`：重放 JSONL，同时明确 `terminal_state=replayed` 和 `official_result=false`。
 - Replay fault injection：显式覆盖缺帧、重复帧、乱序、过期 Polygon 和 Event 空流。
 - `ResultEnvelope`：把候选结果、终态和权威布尔值放在同一个稳定契约中。

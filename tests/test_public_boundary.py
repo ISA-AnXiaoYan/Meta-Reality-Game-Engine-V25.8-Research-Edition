@@ -18,6 +18,11 @@ def test_frame_contract_is_stable():
     assert frame.camera_id == "cam-01"
 
 
+def test_synthetic_adapter_supports_two_and_eight_camera_shapes():
+    assert len(list(frames(1, 2))) == 2
+    assert len(list(frames(1, 8))) == 8
+
+
 def test_fake_backend_is_deterministic_and_local():
     frame = next(frames(1))
     first = FakeBackend().predict(frame)

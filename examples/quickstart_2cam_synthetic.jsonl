@@ -1,0 +1,2 @@
+{"frame":{"camera_id":"cam-01","epoch_id":"synthetic-epoch","frame_index":0,"payload":{"objects":[]},"run_id":"synthetic-run","timestamp_ns":0},"official_result":false,"schema_version":"mrge.synthetic_sample.v1"}
+{"frame":{"camera_id":"cam-02","epoch_id":"synthetic-epoch","frame_index":1,"payload":{"objects":[]},"run_id":"synthetic-run","timestamp_ns":0},"official_result":false,"schema_version":"mrge.synthetic_sample.v1"}
