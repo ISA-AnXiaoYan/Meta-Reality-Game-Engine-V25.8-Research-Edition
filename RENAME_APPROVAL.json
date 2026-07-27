@@ -1,0 +1,11 @@
+{
+  "approval_state": "APPROVED",
+  "approved_by": "user",
+  "approval_scope": "V25.8 research edition rename plan and single-repository boundary",
+  "approved_at": "2026-07-28",
+  "source_plan": "V25_8_RESEARCH_EDITION_RENAME_PLAN_FOR_APPROVAL_20260728.csv",
+  "source_rows": 68,
+  "terminal_state": "APPROVED_BY_USER",
+  "exceptions": [],
+  "authorization_boundary": "R6 validation and candidate tag only; no real hardware, data, weights, production authority, or private archive publication"
+}

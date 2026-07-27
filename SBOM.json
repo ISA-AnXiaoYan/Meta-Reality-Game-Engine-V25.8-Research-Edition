@@ -1,0 +1,15 @@
+{
+  "SPDX-License-Identifier": "AGPL-3.0-only",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "application",
+      "name": "meta-reality-game-engine-research",
+      "version": "25.8.0.dev0",
+      "licenses": [{"license": {"id": "AGPL-3.0-only"}}]
+    }
+  },
+  "components": []
+}

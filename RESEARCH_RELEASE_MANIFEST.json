@@ -1,6 +1,9 @@
 {
   "edition": "V25.8 Research Edition",
-  "release_state": "R5-pre-R6",
+  "release_state": "R6-candidate",
+  "candidate_tag": "v25.8.0-research.1",
+  "r6_check": "PASS",
+  "rename_approval": "APPROVED",
   "qualification_claimed": false,
   "field_effectiveness_validated": false,
   "production_cutover": false,

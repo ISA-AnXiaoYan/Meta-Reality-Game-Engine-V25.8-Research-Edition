@@ -12,9 +12,11 @@
 | R3 AGPL 研究引擎 | 完成 | `src/mrge/engine/`、`mrge` CLI |
 | R4 研究 Adapter/Perception | 完成（合成边界） | synthetic Adapter；没有真实硬件或模型 |
 | R5 Legacy 语义对齐 | 研究版基线完成 | `RESEARCH_RELEASE_MANIFEST.json` 与候选语义字段 |
-| R6 Rename 验收 | 未执行 | 需要最终 SPDX、SBOM、secret、绝对路径扫描和 CSV 终态 |
+| R6 Rename 验收 | 通过（候选） | `tools/r6_release_check.py`：SPDX、绝对路径、Secret、数据/权重扫描通过 |
 
 ## 权威边界
 
 所有推理输出都是 `candidate`。本仓库不提供 `official_result`、生产判定、现场有效性或生产切换声明。
 真实硬件 Adapter、真实数据、模型权重、供应商 SDK、网络写入和运行时归档均不在首发范围。
+
+候选标签：`v25.8.0-research.1`。该标签仍不代表生产资格或现场有效性。
