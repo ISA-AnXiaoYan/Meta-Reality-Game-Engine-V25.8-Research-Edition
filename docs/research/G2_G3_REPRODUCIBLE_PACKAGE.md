@@ -14,6 +14,7 @@
 - `examples/fullchain_8cam_replay.jsonl`：8 路回放链样例。
 - `mrge replay`：重放 JSONL，同时明确 `terminal_state=replayed` 和 `official_result=false`。
 - Replay fault injection：显式覆盖缺帧、重复帧、乱序、过期 Polygon 和 Event 空流。
+- `InferenceBackend`、Visible/Event Adapter 与 `GameBridge` Protocol：允许后续插件替换实现，默认不打开硬件或网络。
 - `ResultEnvelope`：把候选结果、终态和权威布尔值放在同一个稳定契约中。
 
 ## 当前未声称

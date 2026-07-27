@@ -3,7 +3,8 @@ from mrge.adapters.synthetic import frames
 from mrge.contracts import Frame, HitCandidate
 from mrge.engine.pipeline import process, run
 from mrge.perception.fake import FakeBackend
-from mrge.adapters import NullAdapter
+from mrge.adapters import NullAdapter, NullBridge
+from mrge.engine.protocols import EventAdapter, GameBridge, InferenceBackend, VisibleCameraAdapter
 
 
 def test_synthetic_pipeline_is_candidate_only():
@@ -40,3 +41,15 @@ def test_every_input_has_terminal_research_state():
 
 def test_null_adapter_does_not_open_hardware():
     assert list(NullAdapter().frames()) == []
+
+
+def test_replaceable_protocols_and_null_bridge_are_public():
+    frame = next(frames(1))
+    backend = FakeBackend()
+    bridge = NullBridge()
+    assert isinstance(backend, InferenceBackend)
+    assert isinstance(NullAdapter(), VisibleCameraAdapter)
+    assert isinstance(NullAdapter(), EventAdapter)
+    assert isinstance(bridge, GameBridge)
+    bridge.publish({"official_result": False, "frame_index": frame.frame_index})
+    assert bridge.messages[0]["official_result"] is False

@@ -2,5 +2,6 @@
 """Public-safe adapters only: mock and file."""
 
 from .null_adapter import NullAdapter
+from .null_bridge import NullBridge
 
-__all__ = ["NullAdapter"]
+__all__ = ["NullAdapter", "NullBridge"]
