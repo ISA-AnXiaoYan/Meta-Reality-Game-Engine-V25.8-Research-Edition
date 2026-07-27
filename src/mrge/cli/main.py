@@ -8,6 +8,7 @@ from mrge.adapters.synthetic import frames
 from mrge.engine.pipeline import process, run
 from replay.jsonl import write
 from replay.jsonl import read
+from replay.faults import inject
 
 
 def main(argv=None) -> int:
@@ -20,6 +21,7 @@ def main(argv=None) -> int:
     sample.add_argument("--output", required=True)
     rep = sub.add_parser("replay")
     rep.add_argument("--input", required=True)
+    rep.add_argument("--fault", action="append", default=[])
     args = parser.parse_args(argv)
     if args.command == "validate":
         print(json.dumps({"status": "ok", "authority": "research-only"}))
@@ -30,6 +32,7 @@ def main(argv=None) -> int:
         write(args.output, ({"frame": json.loads(frame.to_json())} for frame in frames(3)))
         print(json.dumps({"written": str(Path(args.output)), "official_result": False}, sort_keys=True))
     else:
-        for row in read(args.input):
+        rows = inject(read(args.input), args.fault)
+        for row in rows:
             print(json.dumps({"replayed": row, "terminal_state": "replayed", "official_result": False}, sort_keys=True))
     return 0
