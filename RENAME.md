@@ -10,6 +10,18 @@
 - 公开模式：维护者已确认其对纳入版本库的 V25.8–V26 自有源码、真实数据和私有部署材料拥有公开权利；迁移过程保留逐文件来源、哈希与例外记录。
 - 不公开的例外：供应商 SDK 或二进制、受第三方再分发限制的模型权重、他人个人数据/身份资料、密钥、证书、令牌、未获授权的网络端点及任何来源或授权仍不清晰的内容。
 
+## 开源内容总览
+
+这是一个“**研究引擎 + 可复核历史归档**”仓库，而不是把历史代码直接宣称为可投入真实比赛或生产裁决的产品。公共内容分为三层：
+
+| 层级 | 已公开内容 | 用途与边界 |
+| --- | --- | --- |
+| 研究引擎 | `mrge/`、`contracts/`、Replay、几何、过滤、预览与研究 Profile | 供开发者在合成或自有授权环境中复现、派生和验证研究分支；不替代现场资格。 |
+| V25.8–V26 历史归档 | 历史源码、研发数据、部署脚本、配置、证据与发布记录 | 保留可追溯研究上下文，便于回放、迁移、比较与分支研发。 |
+| 可检索知识资产 | V26 静态代码知识图谱、发布清单、哈希、排除清单和治理说明 | 帮助理解模块边界与来源；图谱和清单不替代真实运行、日志、资格或 Authority 证据。 |
+
+公开采用“**完整公开，授权例外**”原则：自有且确认可再分发的材料以文件形式发布；供应商 SDK/HAL、二进制、受限权重、凭据、未获授权个人资料和来源不清内容始终排除。许可仍以根目录与文件内的 SPDX/具体声明为准：`contracts/` 与 Replay 为 Apache-2.0，其余未另行声明内容为 AGPL-3.0-only。
+
 ## V25.8–V26 历史公开扩展
 
 本仓库不再只发布最小研究实现。`historical/v25.8/` 与 `historical/v26/` 保留经筛查的历史源码、部署脚本、配置、真实数据和研发文档，尽可能维持原始目录与可追溯来源；V26 的静态代码知识图谱已发布在 [`historical/knowledge-graph/v26/`](historical/knowledge-graph/v26/)，用于导航模块、层级与已验证的静态关系。
@@ -18,9 +30,102 @@
 
 当前迁移的文件数量、字节数、树哈希与 V26 固定提交见 [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json)；图谱来源提交、节点/边数量、分层和导览约束见 [`historical/knowledge-graph/README.md`](historical/knowledge-graph/README.md)；不可再分发的 V25.8 专有组件、混合工作树和其他授权例外见 [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md)。
 
-## V27 完整目标架构图
+## V26 代码知识图谱：使用说明
 
-> 这是开发复用的目标结构图：它说明模块归属、只读方向和禁止跨越的 Authority 边界；不表示所有模块已经实现、资格通过或可用于生产。
+V26 图谱位于 [`historical/knowledge-graph/v26/knowledge-graph.json`](historical/knowledge-graph/v26/knowledge-graph.json)，对应固定历史提交 `18f453bc887497c73efe3b8ac39ddfe3809b212c`。它包含 279 个文件级节点、2,654 个静态节点、6,964 条已提取关系、8 个架构层级和 9 步中文导览。
+
+### 图谱界面示例
+
+![V26 代码知识图谱：8 个架构层级与 9 步导览](docs/assets/v26-knowledge-graph-overview.png)
+
+上图是“项目概览”视图：卡片表示文件级架构层，右侧是从项目全景到仓库卫生门禁的阅读导览。该图片仅展示静态代码图谱界面，不展示真实数据、硬件画面、运行日志或裁决结果。
+
+### 启用本地图谱查看器
+
+前提：已克隆本仓库，并安装 Node.js（含 `npx`）。以下 PowerShell 命令在**仓库根目录**执行：它只复制已发布的图谱 JSON 到临时查看目录，并启动仅监听 `127.0.0.1` 的本地查看器；不会启动 V26 运行时、相机、Event HAL 或任何现场服务。
+
+```powershell
+$viewerRoot = Join-Path $env:TEMP "mrge-v26-knowledge-graph-viewer"
+$uaDir = Join-Path $viewerRoot ".ua"
+New-Item -ItemType Directory -Force -Path $uaDir | Out-Null
+Copy-Item "historical/knowledge-graph/v26/knowledge-graph.json" $uaDir -Force
+Copy-Item "historical/knowledge-graph/v26/meta.json" $uaDir -Force
+Set-Content -LiteralPath (Join-Path $uaDir "config.json") -Encoding utf8 -Value '{"outputLanguage":"zh"}'
+npx --yes "https://github.com/Egonex-AI/Understand-Anything/releases/download/v2.9.4/understand-anything-viewer.tgz" $viewerRoot
+```
+
+终端会打印带一次性访问令牌的 `Dashboard URL`，浏览器会自动打开该地址；如果没有自动打开，请完整复制该 URL（包括 `?token=`）到浏览器。查看完成后直接在终端按 `Ctrl+C` 关闭查看器。图谱文件本身不被改写，也不会上传到外部服务。
+
+建议按以下顺序使用：
+
+1. 从“项目概览”读取 8 个层级，先确定工作落点，而不要从单一脚本推断整个系统。
+2. 从“项目导览”依次查看启动编排、YOLO 感知、身份/空间融合、命中边界、游戏桥接、Shadow、远程验证和仓库卫生门禁。
+3. 用搜索和“文件”视图定位节点后，回到 `historical/v26/` 阅读实际源码、Profile、配置、测试与记录；以 source commit、release manifest 和实际证据共同复核结论。
+4. 派生新布局或传感器方案时，先将输入、时间基准、几何锚点、输出事实、消费者和 Authority 边界版本化，再修改算法或接入代码。
+
+图谱是静态导航，不会证明硬件已连接、部署能启动、数据质量合格或命中/身份结果具备 Authority。当前没有可验证的跨批 import map，因此图谱不补造推测性的跨模块依赖边。
+
+## V26 历史实现架构图
+
+> 这是从已公开 V26 源码、配置、工具与静态知识图谱归纳出的历史结构。它用于理解真实归档内容和寻找迁移切入点；其中供应商接入、模型权重和现场凭据可能仅以外部依赖引用存在，并不随仓库发布。
+
+```mermaid
+flowchart LR
+    subgraph CONTROL["项目治理、运行配置与编排"]
+        PROFILE["Profiles / 配置 / 发布记录"]
+        LAUNCH["启动器与远程运维"]
+        HYGIENE["测试、实验与仓库卫生"]
+        PROFILE --> LAUNCH
+        HYGIENE --> LAUNCH
+    end
+
+    subgraph INPUT["历史采集与输入边界"]
+        VSDK["外部可见光 SDK / 相机 HAL\n不随仓库发布"]
+        ESDK["外部 Event SDK / HAL\n不随仓库发布"]
+        MVS["MVS 帧接入 / Recording Bundle"]
+        EVENT["Event 窗口 / Trigger / RAW 记录"]
+        VSDK -. "外部依赖" .-> MVS
+        ESDK -. "外部依赖" .-> EVENT
+    end
+
+    subgraph PERCEPTION["感知、跟踪与融合"]
+        YOLO["YOLO Segmentation\nMask / Polygon"]
+        TRACK["Person ID / Runtime Track"]
+        BEV["Homography / BEV / Geometry"]
+        FUSION["预览与多视角融合"]
+        MVS --> YOLO --> TRACK --> BEV
+        YOLO --> FUSION
+        BEV --> FUSION
+    end
+
+    subgraph EVENTPATH["事件与判定研究链路"]
+        DENOISE["Event 过滤 / 预览"]
+        BALLISTIC["弹道候选 / 轨迹"]
+        JUDGE["Hit Judge / Evidence\n历史研究判定"]
+        EVENT --> DENOISE --> BALLISTIC --> JUDGE
+        BEV --> JUDGE
+        YOLO --> JUDGE
+    end
+
+    subgraph OUTPUT["游戏、回放与证据"]
+        GAME["UE5 / Game Bridge"]
+        REPLAY["回放、报告与证据记录"]
+        DATA["历史数据集与实验结果"]
+        JUDGE --> GAME
+        MVS --> REPLAY
+        EVENT --> REPLAY
+        FUSION --> REPLAY
+        JUDGE --> REPLAY
+        DATA --> REPLAY
+    end
+
+    LAUNCH --> MVS
+    LAUNCH --> EVENT
+```
+
+## MRGE 1.0 正式推进版整体架构图
+
+> 此图对应正在推进的 **Meta-Reality Game Engine Version 1.0** 正式架构：以 `MRGE_V1_0_ARCHITECTURE_SPEC.zh-CN.md` v8.1.1 为规范性来源。它是“ACTIVE / APPROVED、IMPLEMENTATION IN_PROGRESS、NOT QUALIFIED”的目标设计，不是 V26 已实现功能清单，也不构成生产切换、真实比赛或裁决 Authority 声明。
 
 ```mermaid
 flowchart TB
@@ -268,4 +373,4 @@ flowchart TB
 | AIRY | 默认 `DISABLED`，可选 `SHADOW/AUGMENT`，独立 Optional Seal | 改写基线位置、身份绑定、Hit/Relation、AuthorityReceipt 或 Base qualification |
 | 回放与复核 | 标准 Replay 只消费已记录内容；模型/人工只读封存证据 | 标准回放重跑模型/算法，或让 LLM/人工改写比赛状态 |
 
-完整的命名映射、阶段路线、pre-V27 迁移规则与发布治理见 [docs/governance/RENAME.md](docs/governance/RENAME.md)。根目录文件直接展示架构，治理目录保留细化规则。
+完整的命名映射、阶段路线、pre-V27 迁移规则与发布治理见 [docs/governance/RENAME.md](docs/governance/RENAME.md)。根目录文件直接展示 V26 历史结构与 MRGE 1.0 目标架构，治理目录保留细化规则。

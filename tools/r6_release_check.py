@@ -28,7 +28,13 @@ def main() -> int:
     for path in files:
         if path.resolve() == Path(__file__).resolve():
             continue
-        text = path.read_text(encoding="utf-8", errors="replace")
+        raw = path.read_bytes()
+        # Images and other binary assets can contain byte sequences that happen
+        # to resemble a Windows or POSIX path.  SPDX and absolute-path checks
+        # apply to source/text artifacts; keep the secret-pattern scan below
+        # over the decoded representation for every tracked file.
+        is_binary = b"\x00" in raw[:8192]
+        text = raw.decode("utf-8", errors="replace")
         relative = path.relative_to(ROOT)
         is_historical = relative.parts and relative.parts[0] == "historical"
         if (
@@ -38,7 +44,7 @@ def main() -> int:
         ):
             if "SPDX-License-Identifier" not in text:
                 missing_spdx.append(str(relative))
-        if not is_historical and re.search(r"(?:[A-Za-z]:\\|/Users/|/home/|/mnt/)", text):
+        if not is_historical and not is_binary and re.search(r"(?:[A-Za-z]:\\|/Users/|/home/|/mnt/)", text):
             absolute_paths.append(str(relative))
         for pattern in SECRET_PATTERNS:
             if pattern.search(text):
