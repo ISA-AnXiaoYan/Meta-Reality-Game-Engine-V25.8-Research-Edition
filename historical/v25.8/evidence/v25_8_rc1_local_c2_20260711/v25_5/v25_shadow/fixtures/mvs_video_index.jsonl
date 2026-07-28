@@ -1,0 +1,8 @@
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"A","video_handle":"fixture://mvs-video/A"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"B","video_handle":"fixture://mvs-video/B"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"C","video_handle":"fixture://mvs-video/C"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"D","video_handle":"fixture://mvs-video/D"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"E","video_handle":"fixture://mvs-video/E"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"F","video_handle":"fixture://mvs-video/F"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"G","video_handle":"fixture://mvs-video/G"}
+{"first_sync_index":100,"frame_count":3,"last_sync_index":102,"read_only":true,"schema_version":1,"source_camera":"H","video_handle":"fixture://mvs-video/H"}

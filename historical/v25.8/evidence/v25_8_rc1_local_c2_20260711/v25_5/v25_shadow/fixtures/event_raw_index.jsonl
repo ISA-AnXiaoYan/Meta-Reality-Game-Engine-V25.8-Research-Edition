@@ -1,0 +1,8 @@
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/A","read_only":true,"schema_version":1,"source_camera":"A"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/B","read_only":true,"schema_version":1,"source_camera":"B"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/C","read_only":true,"schema_version":1,"source_camera":"C"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/D","read_only":true,"schema_version":1,"source_camera":"D"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/E","read_only":true,"schema_version":1,"source_camera":"E"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/F","read_only":true,"schema_version":1,"source_camera":"F"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/G","read_only":true,"schema_version":1,"source_camera":"G"}
+{"contains_ext_trigger":true,"first_sync_index":100,"last_sync_index":102,"raw_handle":"fixture://event-raw/H","read_only":true,"schema_version":1,"source_camera":"H"}

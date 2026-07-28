@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "kind": "hit_judge_experiment_profile",
+  "experiment_id": "v22_hit_bbox96_soft",
+  "stage": "V22-hit-soft-filter",
+  "description": "More aggressive bbox-start 96 px human-noise suppression for false-positive pressure tests.",
+  "final_hit_authority": "strong_reasoning",
+  "strong_gate_enabled": true,
+  "strong_reasoning_enabled": true,
+  "strong_reasoning_shadow_only": false,
+  "pseudo_hit_enable": true,
+  "human_noise_filter_enable": true,
+  "human_noise_filter_mode": "soft",
+  "human_noise_track_start_bbox_filter_enable": true,
+  "human_noise_track_start_bbox_expand_px": 96.0,
+  "human_noise_track_start_bbox_policy": "soft",
+  "final_hit_cross_camera_dedup_ms": 120.0
+}

@@ -1,0 +1,548 @@
+{
+  "schema_version": 1,
+  "gate": "V25.4-D",
+  "passed": true,
+  "execution_mode": "offline_headless",
+  "human_participation_required": false,
+  "world_state_authority_dependency": false,
+  "authority": "shadow_and_dry_run_only",
+  "official_result": false,
+  "official_writer_count": 0,
+  "fixture_verification": {
+    "passed": true,
+    "streams": {
+      "world_snapshots.jsonl": {
+        "passed": true,
+        "sha256": "993ec49ba14e9cf73f0c2248453fd577c919e792403a74a93566c2b927a76e2f",
+        "rows": 5
+      },
+      "person_masks.jsonl": {
+        "passed": true,
+        "sha256": "eb13c5de3dfefd55ef894c47c840c5557d652ab17874d265d14bebdd26ac5675",
+        "rows": 3
+      },
+      "event_trajectories.jsonl": {
+        "passed": true,
+        "sha256": "70148a53e4117394e13a5c181997aaef45c6d2cb7a9d4e0d9ace49c48f6afb70",
+        "rows": 4
+      },
+      "trigger_evidence.jsonl": {
+        "passed": true,
+        "sha256": "8e91d7c3a6756d2aab0b957373f9d8e9bdeafacb2b38ad95f2d30f96def440ae",
+        "rows": 3
+      },
+      "expected_combat.jsonl": {
+        "passed": true,
+        "sha256": "240f68681a954bbc32b658657370609d46914cf02352ef998caea6610b35d55c",
+        "rows": 4
+      }
+    }
+  },
+  "repeats": 3,
+  "deterministic": true,
+  "run_hashes": [
+    "4bb8cb22bd3d1a941319c2488788fa8f8eab41f108fc3cd3bcbffe1724d3cc70",
+    "4bb8cb22bd3d1a941319c2488788fa8f8eab41f108fc3cd3bcbffe1724d3cc70",
+    "4bb8cb22bd3d1a941319c2488788fa8f8eab41f108fc3cd3bcbffe1724d3cc70"
+  ],
+  "functional_passed": true,
+  "authority_passed": true,
+  "performance": {
+    "visualization_fps_floor": 29.0,
+    "visualization_fps_samples": [
+      38.56318359741386,
+      35.99818540358716,
+      32.47169053080065
+    ],
+    "visualization_fps_min": 32.47169053080065,
+    "combat_ms_per_event_samples": [
+      0.036875000660074875,
+      0.04930000068270601,
+      0.042499999835854396
+    ],
+    "combat_ms_per_event_max": 0.04930000068270601,
+    "bridge_ms_per_event_samples": [
+      0.1962000023922883,
+      0.5710250006814022,
+      0.1644750009290874
+    ],
+    "bridge_ms_per_event_max": 0.5710250006814022,
+    "passed": true
+  },
+  "runs": [
+    {
+      "visualization_hash": "531431112bb6818d023f8615efe122ccad82e75e483d299274aa22a4b0b3ef54",
+      "combat_decisions": [
+        {
+          "event_id": "shadow-combat:f6d93b3ca1bdeb29",
+          "trajectory_id": "trajectory-terminal-hit",
+          "sync_index": 2,
+          "timestamp_us": 80000,
+          "state": "ok",
+          "pseudo_hit": true,
+          "reason": "terminal_inside_mask",
+          "victim_global_id": 1,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.855,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": true,
+            "reason": "terminal_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": true,
+            "reason": "terminal_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true,
+            "matched_point_index": 2,
+            "stable_track_id": "trajectory-terminal-hit"
+          }
+        },
+        {
+          "event_id": "shadow-combat:5785ac68cb31378d",
+          "trajectory_id": "trajectory-turn-hit",
+          "sync_index": 3,
+          "timestamp_us": 120000,
+          "state": "ok",
+          "pseudo_hit": true,
+          "reason": "turn_inside_mask",
+          "victim_global_id": 2,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.855,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": true,
+            "reason": "turn_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": true,
+            "reason": "turn_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true,
+            "matched_point_index": 1,
+            "stable_track_id": "trajectory-turn-hit"
+          }
+        },
+        {
+          "event_id": "shadow-combat:fc7467f63e8b620a",
+          "trajectory_id": "trajectory-miss",
+          "sync_index": 3,
+          "timestamp_us": 120000,
+          "state": "ok",
+          "pseudo_hit": false,
+          "reason": "no_key_point_inside_mask",
+          "victim_global_id": null,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.0,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": false,
+            "reason": "no_key_point_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": false,
+            "reason": "no_key_point_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true
+          }
+        },
+        {
+          "event_id": "shadow-combat:341eab8cdcd54c73",
+          "trajectory_id": "trajectory-human-noise",
+          "sync_index": 4,
+          "timestamp_us": 160000,
+          "state": "rejected",
+          "pseudo_hit": false,
+          "reason": "human_noise",
+          "victim_global_id": null,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.0,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": false,
+            "reason": "human_noise"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": false,
+            "reason": "human_noise"
+          },
+          "detail": {
+            "trigger_present": true
+          }
+        }
+      ],
+      "truth_mismatches": [],
+      "bridge_payload_hash": "b9e4d18c20bfdacaa3cb7f40f33f177a0e7fea459c12b83d5aea4462ac818da7",
+      "bridge_payload_rows": 2,
+      "fault_checks": {
+        "stale_world_degraded": true,
+        "visualization_disconnect_visible": true,
+        "combat_exception_isolated": true,
+        "bridge_disconnect_queued": true,
+        "bridge_duplicate_while_queued": true,
+        "bridge_reconnected_once": true,
+        "malformed_payload_rejected": true
+      },
+      "component_states": {
+        "visualization": {
+          "state": "ok",
+          "authority": "shadow_only",
+          "official_result": false
+        },
+        "combat_engine": {
+          "state": "ok",
+          "authority": "shadow_only",
+          "official_result": false
+        },
+        "game_bridge": {
+          "component": "mrg-game-bridge",
+          "state": "ok",
+          "mode": "local_sink",
+          "stream_role": "dry_run",
+          "authority": "dry_run_only",
+          "official_result": false,
+          "queue_size": 0,
+          "published_count": 2,
+          "duplicate_count": 2,
+          "dropped_count": 0
+        }
+      },
+      "official_writer_count": 0
+    },
+    {
+      "visualization_hash": "531431112bb6818d023f8615efe122ccad82e75e483d299274aa22a4b0b3ef54",
+      "combat_decisions": [
+        {
+          "event_id": "shadow-combat:f6d93b3ca1bdeb29",
+          "trajectory_id": "trajectory-terminal-hit",
+          "sync_index": 2,
+          "timestamp_us": 80000,
+          "state": "ok",
+          "pseudo_hit": true,
+          "reason": "terminal_inside_mask",
+          "victim_global_id": 1,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.855,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": true,
+            "reason": "terminal_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": true,
+            "reason": "terminal_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true,
+            "matched_point_index": 2,
+            "stable_track_id": "trajectory-terminal-hit"
+          }
+        },
+        {
+          "event_id": "shadow-combat:5785ac68cb31378d",
+          "trajectory_id": "trajectory-turn-hit",
+          "sync_index": 3,
+          "timestamp_us": 120000,
+          "state": "ok",
+          "pseudo_hit": true,
+          "reason": "turn_inside_mask",
+          "victim_global_id": 2,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.855,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": true,
+            "reason": "turn_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": true,
+            "reason": "turn_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true,
+            "matched_point_index": 1,
+            "stable_track_id": "trajectory-turn-hit"
+          }
+        },
+        {
+          "event_id": "shadow-combat:fc7467f63e8b620a",
+          "trajectory_id": "trajectory-miss",
+          "sync_index": 3,
+          "timestamp_us": 120000,
+          "state": "ok",
+          "pseudo_hit": false,
+          "reason": "no_key_point_inside_mask",
+          "victim_global_id": null,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.0,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": false,
+            "reason": "no_key_point_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": false,
+            "reason": "no_key_point_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true
+          }
+        },
+        {
+          "event_id": "shadow-combat:341eab8cdcd54c73",
+          "trajectory_id": "trajectory-human-noise",
+          "sync_index": 4,
+          "timestamp_us": 160000,
+          "state": "rejected",
+          "pseudo_hit": false,
+          "reason": "human_noise",
+          "victim_global_id": null,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.0,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": false,
+            "reason": "human_noise"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": false,
+            "reason": "human_noise"
+          },
+          "detail": {
+            "trigger_present": true
+          }
+        }
+      ],
+      "truth_mismatches": [],
+      "bridge_payload_hash": "b9e4d18c20bfdacaa3cb7f40f33f177a0e7fea459c12b83d5aea4462ac818da7",
+      "bridge_payload_rows": 2,
+      "fault_checks": {
+        "stale_world_degraded": true,
+        "visualization_disconnect_visible": true,
+        "combat_exception_isolated": true,
+        "bridge_disconnect_queued": true,
+        "bridge_duplicate_while_queued": true,
+        "bridge_reconnected_once": true,
+        "malformed_payload_rejected": true
+      },
+      "component_states": {
+        "visualization": {
+          "state": "ok",
+          "authority": "shadow_only",
+          "official_result": false
+        },
+        "combat_engine": {
+          "state": "ok",
+          "authority": "shadow_only",
+          "official_result": false
+        },
+        "game_bridge": {
+          "component": "mrg-game-bridge",
+          "state": "ok",
+          "mode": "local_sink",
+          "stream_role": "dry_run",
+          "authority": "dry_run_only",
+          "official_result": false,
+          "queue_size": 0,
+          "published_count": 2,
+          "duplicate_count": 2,
+          "dropped_count": 0
+        }
+      },
+      "official_writer_count": 0
+    },
+    {
+      "visualization_hash": "531431112bb6818d023f8615efe122ccad82e75e483d299274aa22a4b0b3ef54",
+      "combat_decisions": [
+        {
+          "event_id": "shadow-combat:f6d93b3ca1bdeb29",
+          "trajectory_id": "trajectory-terminal-hit",
+          "sync_index": 2,
+          "timestamp_us": 80000,
+          "state": "ok",
+          "pseudo_hit": true,
+          "reason": "terminal_inside_mask",
+          "victim_global_id": 1,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.855,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": true,
+            "reason": "terminal_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": true,
+            "reason": "terminal_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true,
+            "matched_point_index": 2,
+            "stable_track_id": "trajectory-terminal-hit"
+          }
+        },
+        {
+          "event_id": "shadow-combat:5785ac68cb31378d",
+          "trajectory_id": "trajectory-turn-hit",
+          "sync_index": 3,
+          "timestamp_us": 120000,
+          "state": "ok",
+          "pseudo_hit": true,
+          "reason": "turn_inside_mask",
+          "victim_global_id": 2,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.855,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": true,
+            "reason": "turn_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": true,
+            "reason": "turn_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true,
+            "matched_point_index": 1,
+            "stable_track_id": "trajectory-turn-hit"
+          }
+        },
+        {
+          "event_id": "shadow-combat:fc7467f63e8b620a",
+          "trajectory_id": "trajectory-miss",
+          "sync_index": 3,
+          "timestamp_us": 120000,
+          "state": "ok",
+          "pseudo_hit": false,
+          "reason": "no_key_point_inside_mask",
+          "victim_global_id": null,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.0,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": false,
+            "reason": "no_key_point_inside_mask"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": false,
+            "reason": "no_key_point_inside_mask"
+          },
+          "detail": {
+            "trigger_present": true
+          }
+        },
+        {
+          "event_id": "shadow-combat:341eab8cdcd54c73",
+          "trajectory_id": "trajectory-human-noise",
+          "sync_index": 4,
+          "timestamp_us": 160000,
+          "state": "rejected",
+          "pseudo_hit": false,
+          "reason": "human_noise",
+          "victim_global_id": null,
+          "shooter_global_id": 99,
+          "evidence_quality": 0.0,
+          "stream_role": "shadow",
+          "authority": "shadow_only",
+          "official_result": false,
+          "strong_gate": {
+            "namespace": "strong_gate_shadow",
+            "eligible": false,
+            "reason": "human_noise"
+          },
+          "strong_inference": {
+            "namespace": "strong_inference_shadow",
+            "eligible": false,
+            "reason": "human_noise"
+          },
+          "detail": {
+            "trigger_present": true
+          }
+        }
+      ],
+      "truth_mismatches": [],
+      "bridge_payload_hash": "b9e4d18c20bfdacaa3cb7f40f33f177a0e7fea459c12b83d5aea4462ac818da7",
+      "bridge_payload_rows": 2,
+      "fault_checks": {
+        "stale_world_degraded": true,
+        "visualization_disconnect_visible": true,
+        "combat_exception_isolated": true,
+        "bridge_disconnect_queued": true,
+        "bridge_duplicate_while_queued": true,
+        "bridge_reconnected_once": true,
+        "malformed_payload_rejected": true
+      },
+      "component_states": {
+        "visualization": {
+          "state": "ok",
+          "authority": "shadow_only",
+          "official_result": false
+        },
+        "combat_engine": {
+          "state": "ok",
+          "authority": "shadow_only",
+          "official_result": false
+        },
+        "game_bridge": {
+          "component": "mrg-game-bridge",
+          "state": "ok",
+          "mode": "local_sink",
+          "stream_role": "dry_run",
+          "authority": "dry_run_only",
+          "official_result": false,
+          "queue_size": 0,
+          "published_count": 2,
+          "duplicate_count": 2,
+          "dropped_count": 0
+        }
+      },
+      "official_writer_count": 0
+    }
+  ]
+}

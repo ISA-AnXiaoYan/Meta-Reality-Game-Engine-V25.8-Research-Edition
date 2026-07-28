@@ -1,0 +1,1384 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Independent PyOpenGL + CUDA preview renderer.
+
+Design goals for the 8-camera fusion project:
+  - Video stream updates at 40 FPS.
+  - Bullet trajectory redraws at 250 FPS.
+  - Video updates do not run at 250 FPS and do not repeatedly upload unchanged frames.
+  - Preview consumes raw Bayer8 shared memory and performs Bayer->RGBA+resize on CUDA.
+  - Bullet trajectories are consumed from a compact binary shm and rendered as GPU VBO lines.
+
+This renderer is intentionally independent from fusion_renderer_gl.py.  It is a
+preview-only consumer and must not back-pressure MVS, YOLO, fusion, or hit logic.
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import ctypes
+import glob
+import json
+import os
+import sys
+import threading
+import time
+from collections import deque
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+
+try:
+    from PySide6.QtCore import QTimer, Qt, QPointF
+    from PySide6.QtGui import QColor, QFont, QPainter, QPen, QSurfaceFormat, QBrush, QPolygonF
+    from PySide6.QtOpenGLWidgets import QOpenGLWidget
+    from PySide6.QtWidgets import QApplication
+except Exception as exc:  # pragma: no cover
+    print(f"[pygl_cuda_preview][ERROR] PySide6 required: {exc}", file=sys.stderr, flush=True)
+    raise
+
+try:
+    from OpenGL import GL
+except Exception as exc:  # pragma: no cover
+    print(f"[pygl_cuda_preview][ERROR] PyOpenGL required: {exc}", file=sys.stderr, flush=True)
+    raise
+
+from preview_gpu_shm import RawPreviewFrameReader, PreviewTrajectoryReader, RAW_PIXEL_BAYER8
+
+
+def _as_bool(v: Any, default: bool = False) -> bool:
+    if v is None:
+        return default
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, (int, float)):
+        return bool(v)
+    s = str(v).strip().lower()
+    if s in ("1", "true", "yes", "y", "on"):
+        return True
+    if s in ("0", "false", "no", "n", "off"):
+        return False
+    return default
+
+
+def _parse_cams(s: str) -> List[str]:
+    return [x.strip() for x in str(s or "").replace(";", ",").split(",") if x.strip()]
+
+
+def _shm_name_from_template(template: str, cam: str) -> str:
+    return str(template or "mvs_raw_latest_{camera}").format(camera=cam, cam=cam, id=cam)
+
+
+def _grid_layout(cams: List[str], layout: str) -> Tuple[int, int]:
+    s = str(layout or "grid2x4").lower().strip()
+    if s.startswith("grid") and "x" in s:
+        try:
+            a = s.replace("grid", "").split("x")
+            rows = int(a[0]); cols = int(a[1])
+            return max(1, rows), max(1, cols)
+        except Exception:
+            pass
+    n = max(1, len(cams))
+    cols = int(np.ceil(np.sqrt(n)))
+    rows = int(np.ceil(n / cols))
+    return rows, cols
+
+
+CUDA_KERNEL = r'''
+extern "C" __device__ unsigned char clamp_u8(int v) {
+    return (unsigned char)(v < 0 ? 0 : (v > 255 ? 255 : v));
+}
+
+extern "C" __device__ unsigned char src_at(const unsigned char* src, int w, int h, int stride, int x, int y) {
+    x = x < 0 ? 0 : (x >= w ? w - 1 : x);
+    y = y < 0 ? 0 : (y >= h ? h - 1 : y);
+    return src[y * stride + x];
+}
+
+extern "C" __device__ int color_at(int x, int y, int pattern) {
+    // return 0=R, 1=G, 2=B. pattern: 1=BG, 2=RG, 3=GB, 4=GR.
+    int ey = (y & 1) == 0;
+    int ex = (x & 1) == 0;
+    if (pattern == 1) { // BG: B G / G R
+        if (ey && ex) return 2;
+        if (!ey && !ex) return 0;
+        return 1;
+    }
+    if (pattern == 2) { // RG: R G / G B
+        if (ey && ex) return 0;
+        if (!ey && !ex) return 2;
+        return 1;
+    }
+    if (pattern == 3) { // GB: G B / R G
+        if (ey && !ex) return 2;
+        if (!ey && ex) return 0;
+        return 1;
+    }
+    // GR: G R / B G
+    if (ey && !ex) return 0;
+    if (!ey && ex) return 2;
+    return 1;
+}
+
+extern "C" __device__ unsigned char channel_avg(const unsigned char* src, int w, int h, int stride, int x, int y, int pattern, int wanted) {
+    int sum = 0;
+    int cnt = 0;
+    #pragma unroll
+    for (int dy = -1; dy <= 1; ++dy) {
+        #pragma unroll
+        for (int dx = -1; dx <= 1; ++dx) {
+            int xx = x + dx;
+            int yy = y + dy;
+            if (xx < 0 || xx >= w || yy < 0 || yy >= h) continue;
+            if (color_at(xx, yy, pattern) == wanted) {
+                sum += (int)src_at(src, w, h, stride, xx, yy);
+                cnt += 1;
+            }
+        }
+    }
+    if (cnt <= 0) return src_at(src, w, h, stride, x, y);
+    return clamp_u8(sum / cnt);
+}
+
+extern "C" __global__ void bayer_resize_to_rgba(
+    const unsigned char* src,
+    int src_w, int src_h, int src_stride,
+    unsigned char* dst,
+    int dst_w, int dst_h,
+    int pattern
+) {
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if (x >= dst_w || y >= dst_h) return;
+    float sx_f = ((float)x + 0.5f) * ((float)src_w / (float)dst_w) - 0.5f;
+    float sy_f = ((float)y + 0.5f) * ((float)src_h / (float)dst_h) - 0.5f;
+    int sx = (int)(sx_f + 0.5f);
+    int sy = (int)(sy_f + 0.5f);
+    unsigned char r = channel_avg(src, src_w, src_h, src_stride, sx, sy, pattern, 0);
+    unsigned char g = channel_avg(src, src_w, src_h, src_stride, sx, sy, pattern, 1);
+    unsigned char b = channel_avg(src, src_w, src_h, src_stride, sx, sy, pattern, 2);
+    int off = (y * dst_w + x) * 4;
+    dst[off + 0] = r;
+    dst[off + 1] = g;
+    dst[off + 2] = b;
+    dst[off + 3] = 255;
+}
+'''
+
+
+def _now_ms() -> float:
+    return time.time() * 1000.0
+
+
+def _safe_float(v: Any, default: float = 0.0) -> float:
+    try:
+        if v is None:
+            return float(default)
+        return float(v)
+    except Exception:
+        return float(default)
+
+
+def _safe_int(v: Any, default: int = 0) -> int:
+    try:
+        if v is None:
+            return int(default)
+        return int(float(v))
+    except Exception:
+        return int(default)
+
+
+_MARKER_COLORS = {
+    "hit": (1.0, 0.08, 0.02, 1.0),
+    "turn": (1.0, 0.85, 0.10, 1.0),
+    "end": (0.2, 0.8, 1.0, 1.0),
+    "terminal": (0.2, 0.8, 1.0, 1.0),
+    "track_probe": (0.7, 0.4, 1.0, 1.0),
+    "raw_turn": (1.0, 0.55, 0.0, 0.8),
+    "raw_end": (0.4, 0.9, 1.0, 0.8),
+    "point": (1.0, 0.2, 0.05, 0.55),
+    "event": (0.4, 1.0, 0.4, 0.75),
+    "status": (0.7, 0.9, 1.0, 1.0),
+}
+
+
+def _marker_color(kind: str) -> Tuple[float, float, float, float]:
+    return _MARKER_COLORS.get(str(kind or "event"), (1.0, 0.35, 0.10, 1.0))
+
+
+class OverlayState:
+    """Thread-safe small overlay state for the independent CUDA preview.
+
+    Video is intentionally not affected by this state.  Overlay data is small
+    and is drawn as OpenGL primitives / Qt text after the video atlas pass.
+    """
+
+    def __init__(self, cams: List[str], max_markers: int = 4096, max_text: int = 256):
+        self.cams = list(cams)
+        self.cam_to_index = {str(c): i for i, c in enumerate(self.cams)}
+        self.lock = threading.RLock()
+        self.frame_sizes: Dict[str, Tuple[int, int]] = {}
+        self.markers: deque = deque(maxlen=int(max_markers))
+        self.texts: deque = deque(maxlen=int(max_text))
+        self.ws_connected = False
+        self.ws_error = ""
+        self.ws_rx_count = 0
+        self.ws_last_ms = 0.0
+        self.hit_jsonl_rx_count = 0
+        self.last_hit_ms = 0.0
+        self.human_jsonl_rx_count = 0
+        self.last_human_ms = 0.0
+        self.humans_by_cam: Dict[str, Dict[str, Any]] = {}
+
+    def _cam_from_msg(self, msg: Dict[str, Any]) -> str:
+        cam = msg.get("pair_id", msg.get("camera_alias", msg.get("cam", msg.get("camera", ""))))
+        return str(cam or "").strip()
+
+    def _display_size_from_msg(self, cam: str, msg: Dict[str, Any]) -> Tuple[float, float]:
+        dw = _safe_float(msg.get("display_width", 0), 0.0)
+        dh = _safe_float(msg.get("display_height", 0), 0.0)
+        if dw <= 1 or dh <= 1:
+            with self.lock:
+                if cam in self.frame_sizes:
+                    dw, dh = self.frame_sizes[cam]
+        return max(float(dw), 1.0), max(float(dh), 1.0)
+
+    def set_ws_status(self, connected: bool, err: str = "") -> None:
+        with self.lock:
+            self.ws_connected = bool(connected)
+            self.ws_error = str(err or "")[:160]
+
+    def _append_text_locked(self, text: str, cam: str = "", ttl_ms: float = 1800.0, level: str = "info") -> None:
+        self.texts.append({
+            "text": str(text)[:240],
+            "cam": str(cam or ""),
+            "ts_ms": _now_ms(),
+            "ttl_ms": float(ttl_ms),
+            "level": str(level or "info"),
+        })
+
+    def _append_marker_locked(self, cam: str, x: float, y: float, dw: float, dh: float,
+                              kind: str, label: str = "", ttl_ms: float = 1500.0,
+                              radius_px: float = 11.0, color: Optional[Tuple[float, float, float, float]] = None) -> None:
+        if not cam or cam not in self.cam_to_index:
+            return
+        self.markers.append({
+            "cam": str(cam),
+            "x": float(x),
+            "y": float(y),
+            "display_w": max(float(dw), 1.0),
+            "display_h": max(float(dh), 1.0),
+            "kind": str(kind or "event"),
+            "label": str(label or "")[:80],
+            "ts_ms": _now_ms(),
+            "ttl_ms": float(ttl_ms),
+            "radius_px": float(radius_px),
+            "color": tuple(color or _marker_color(kind)),
+        })
+
+    def update_from_overlay_msg(self, msg: Dict[str, Any], source: str = "ws") -> None:
+        if not isinstance(msg, dict):
+            return
+        typ = str(msg.get("type", "") or "")
+        cam = self._cam_from_msg(msg)
+        now = _now_ms()
+        with self.lock:
+            if source == "ws":
+                self.ws_rx_count += 1
+                self.ws_last_ms = now
+            else:
+                self.hit_jsonl_rx_count += 1
+                self.last_hit_ms = now
+
+            if typ == "overlay_frame_state":
+                dw = _safe_int(msg.get("display_width", 0), 0)
+                dh = _safe_int(msg.get("display_height", 0), 0)
+                if cam and dw > 0 and dh > 0:
+                    self.frame_sizes[cam] = (dw, dh)
+                return
+
+            # Normalize hit_candidate JSONL records that may not carry an overlay type.
+            if not typ and ("hit_point_mvs" in msg or "total_score" in msg or "stable_id" in msg):
+                typ = "overlay_hit_candidate"
+
+            if typ in {"overlay_hit_candidate", "hit_candidate"}:
+                dw, dh = self._display_size_from_msg(cam, msg)
+                xy = msg.get("hit_point_mvs") or msg.get("hit_xy") or msg.get("point_mvs")
+                if isinstance(xy, (list, tuple)) and len(xy) >= 2:
+                    x, y = _safe_float(xy[0]), _safe_float(xy[1])
+                else:
+                    x, y = _safe_float(msg.get("x")), _safe_float(msg.get("y"))
+                label = "HIT"
+                if msg.get("stable_id") is not None:
+                    label += f" id={_safe_int(msg.get('stable_id'))}"
+                if msg.get("total_score") is not None:
+                    label += f" s={_safe_float(msg.get('total_score')):.2f}"
+                self._append_marker_locked(cam, x, y, dw, dh, "hit", label, ttl_ms=2500.0, radius_px=16.0)
+                self._append_text_locked(f"{cam} {label}", cam=cam, ttl_ms=2500.0, level="hit")
+                return
+
+            if typ in {"overlay_bullet_marker", "overlay_bullet_event"}:
+                dw, dh = self._display_size_from_msg(cam, msg)
+                x, y = _safe_float(msg.get("x")), _safe_float(msg.get("y"))
+                kind = str(msg.get("marker_type", msg.get("state", "event")) or "event")
+                ttl = 1800.0 if kind != "hit" else 2500.0
+                label = kind
+                bid = msg.get("bullet_id", None)
+                if bid is not None:
+                    label += f" #{_safe_int(bid)}"
+                self._append_marker_locked(cam, x, y, dw, dh, kind, label, ttl_ms=ttl, radius_px=12.0)
+                # Draw approach segment as another transient line endpoint marker when present.
+                ax = msg.get("approach_x", None)
+                ay = msg.get("approach_y", None)
+                if ax is not None and ay is not None:
+                    self._append_marker_locked(cam, _safe_float(ax), _safe_float(ay), dw, dh, "event", "approach", ttl_ms=ttl, radius_px=7.0, color=(0.25, 1.0, 0.25, 0.75))
+                self._append_text_locked(f"{cam} {label}", cam=cam, ttl_ms=ttl, level="marker")
+                return
+
+            if typ == "overlay_bullet_point":
+                # The trajectory shm is the high-rate source of truth.  Keep a tiny
+                # live point marker for debugging when websocket is enabled.
+                dw, dh = self._display_size_from_msg(cam, msg)
+                self._append_marker_locked(cam, _safe_float(msg.get("x")), _safe_float(msg.get("y")), dw, dh,
+                                           "point", "", ttl_ms=350.0, radius_px=4.0, color=(1.0, 0.2, 0.05, 0.45))
+                return
+
+            if typ or msg.get("text") or msg.get("message"):
+                txt = str(msg.get("text", msg.get("message", typ)) or typ)
+                if txt:
+                    self._append_text_locked(txt, cam=cam, ttl_ms=1600.0, level="info")
+
+    def update_from_human_msg(self, msg: Dict[str, Any], source: str = "human_jsonl") -> None:
+        """Store the latest YOLO person mask/bbox result for each camera.
+
+        human_result_*.jsonl carries msg_type=person_regions records from
+        hik_rgb_yolo_seg_multicam_same_model_stableid_v5.py.  Keep only the
+        newest record per camera so stale files from an old sync root cannot
+        overwrite a current run.
+        """
+        if not isinstance(msg, dict):
+            return
+        if str(msg.get("msg_type", msg.get("type", "")) or "") != "person_regions":
+            return
+        cam = str(msg.get("camera", msg.get("camera_name", "")) or "").strip()
+        if not cam or cam not in self.cam_to_index:
+            return
+        persons = msg.get("persons", [])
+        if not isinstance(persons, list):
+            persons = []
+        frame_w = _safe_float(msg.get("frame_w", msg.get("width", 0)), 0.0)
+        frame_h = _safe_float(msg.get("frame_h", msg.get("height", 0)), 0.0)
+        if frame_w <= 1 or frame_h <= 1:
+            meta = msg.get("mvs_meta", {})
+            if isinstance(meta, dict):
+                shape = meta.get("shape")
+                if isinstance(shape, (list, tuple)) and len(shape) >= 2:
+                    frame_h = _safe_float(shape[0], frame_h)
+                    frame_w = _safe_float(shape[1], frame_w)
+                frame_w = _safe_float(meta.get("nWidth", frame_w), frame_w)
+                frame_h = _safe_float(meta.get("nHeight", frame_h), frame_h)
+        frame_w = max(frame_w, 1.0)
+        frame_h = max(frame_h, 1.0)
+        record_wall_us = _safe_float(msg.get("record_wall_us", msg.get("capture_wall_us", 0)), 0.0)
+        frame_id = _safe_int(msg.get("frame_id_local", msg.get("mvs_frame_num", -1)), -1)
+        now = _now_ms()
+        with self.lock:
+            old = self.humans_by_cam.get(cam)
+            if old is not None:
+                old_wall = _safe_float(old.get("record_wall_us", 0.0), 0.0)
+                old_frame = _safe_int(old.get("frame_id", -1), -1)
+                # Ignore stale duplicates from an older sync root or old JSONL tail.
+                if record_wall_us > 0 and old_wall > 0 and record_wall_us < old_wall:
+                    return
+                if record_wall_us <= 0 and frame_id >= 0 and old_frame >= 0 and frame_id < old_frame:
+                    return
+            clean_persons: List[Dict[str, Any]] = []
+            for person in persons[:64]:
+                if not isinstance(person, dict):
+                    continue
+                polys = person.get("mask_polygons", [])
+                bbox = person.get("bbox_xyxy", None)
+                clean_persons.append({
+                    "stable_id": person.get("stable_id", person.get("person_id", "")),
+                    "person_id": person.get("person_id", ""),
+                    "confidence": _safe_float(person.get("confidence", 0.0), 0.0),
+                    "bbox_xyxy": bbox if isinstance(bbox, (list, tuple)) else None,
+                    "mask_polygons": polys if isinstance(polys, list) else [],
+                    "visibility": str(person.get("visibility", "") or ""),
+                })
+            self.humans_by_cam[cam] = {
+                "cam": cam,
+                "ts_ms": now,
+                "record_wall_us": record_wall_us,
+                "frame_id": frame_id,
+                "frame_w": frame_w,
+                "frame_h": frame_h,
+                "persons": clean_persons,
+                "person_count": len(clean_persons),
+            }
+            self.human_jsonl_rx_count += 1
+            self.last_human_ms = now
+
+    def snapshot(self, marker_ttl_ms: float = 2500.0, text_ttl_ms: float = 2500.0) -> Dict[str, Any]:
+        now = _now_ms()
+        with self.lock:
+            markers = [m for m in self.markers if now - float(m.get("ts_ms", 0.0)) <= min(float(marker_ttl_ms), float(m.get("ttl_ms", marker_ttl_ms)))]
+            texts = [t for t in self.texts if now - float(t.get("ts_ms", 0.0)) <= min(float(text_ttl_ms), float(t.get("ttl_ms", text_ttl_ms)))]
+            humans = dict(self.humans_by_cam)
+            return {
+                "markers": markers,
+                "texts": texts,
+                "humans": humans,
+                "frame_sizes": dict(self.frame_sizes),
+                "ws_connected": self.ws_connected,
+                "ws_error": self.ws_error,
+                "ws_rx_count": self.ws_rx_count,
+                "ws_age_ms": 0.0 if self.ws_last_ms <= 0 else now - self.ws_last_ms,
+                "hit_jsonl_rx_count": self.hit_jsonl_rx_count,
+                "human_jsonl_rx_count": self.human_jsonl_rx_count,
+                "human_age_ms": 0.0 if self.last_human_ms <= 0 else now - self.last_human_ms,
+            }
+
+
+class OverlayWsClient:
+    def __init__(self, url: str, state: OverlayState, enabled: bool = True):
+        self.url = str(url or "").strip()
+        self.state = state
+        self.enabled = bool(enabled and self.url)
+        self.stop_evt = threading.Event()
+        self.thread: Optional[threading.Thread] = None
+
+    def start(self) -> None:
+        if not self.enabled:
+            return
+        self.thread = threading.Thread(target=self._thread_main, name="overlay-ws-client", daemon=True)
+        self.thread.start()
+
+    def stop(self) -> None:
+        self.stop_evt.set()
+
+    def _thread_main(self) -> None:
+        try:
+            import websockets  # type: ignore
+        except Exception as exc:
+            self.state.set_ws_status(False, f"import websockets failed: {exc}")
+            print(f"[pygl_cuda_preview][WARN] overlay_ws disabled: import websockets failed: {exc}", flush=True)
+            return
+
+        async def run_loop() -> None:
+            while not self.stop_evt.is_set():
+                try:
+                    async with websockets.connect(self.url, ping_interval=10, ping_timeout=5, max_size=2**20) as ws:
+                        self.state.set_ws_status(True, "")
+                        print(f"[pygl_cuda_preview] overlay_ws connected: {self.url}", flush=True)
+                        async for raw in ws:
+                            if self.stop_evt.is_set():
+                                break
+                            try:
+                                obj = json.loads(raw)
+                                if isinstance(obj, list):
+                                    for x in obj:
+                                        if isinstance(x, dict):
+                                            self.state.update_from_overlay_msg(x, source="ws")
+                                elif isinstance(obj, dict):
+                                    self.state.update_from_overlay_msg(obj, source="ws")
+                            except Exception as exc:
+                                self.state.set_ws_status(True, f"decode failed: {exc}")
+                except Exception as exc:
+                    self.state.set_ws_status(False, str(exc))
+                    time.sleep(1.0)
+
+        asyncio.run(run_loop())
+
+
+
+
+def _resolve_hit_jsonl_paths(args: argparse.Namespace, cams: List[str]) -> Tuple[List[str], str]:
+    """Resolve hit_candidate jsonl paths from runtime/unified config when possible.
+
+    The project often writes hit JSONL under the root configured in
+    mvs_config.sync.root, which may differ from the current test directory.  The
+    renderer still accepts command-line fallback templates, but config wins.
+    """
+    cfg_root = ""
+    hit_template = str(getattr(args, "hit_jsonl_template", "hit_candidate_{camera}.jsonl") or "hit_candidate_{camera}.jsonl")
+    hit_all = str(getattr(args, "hit_all_jsonl", "hit_candidate_all.jsonl") or "hit_candidate_all.jsonl")
+    try:
+        cfg_path = str(getattr(args, "config", "") or "")
+        if cfg_path and os.path.exists(cfg_path):
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            mvs = cfg.get("mvs_config", cfg) if isinstance(cfg, dict) else {}
+            sync = mvs.get("sync", {}) if isinstance(mvs, dict) else {}
+            hit = mvs.get("hit_judge", {}) if isinstance(mvs, dict) else {}
+            if isinstance(sync, dict):
+                cfg_root = str(sync.get("root", "") or "")
+            if isinstance(hit, dict):
+                hit_template = str(hit.get("hit_jsonl_template", hit_template) or hit_template)
+                hit_all = str(hit.get("hit_all_jsonl", hit_all) or hit_all)
+    except Exception as exc:
+        print(f"[pygl_cuda_preview][WARN] failed to parse hit jsonl paths from config: {exc}", flush=True)
+    root = Path(cfg_root or str(getattr(args, "sync_root", "sync_ipc") or "sync_ipc")).expanduser()
+    if not root.is_absolute():
+        root = Path.cwd() / root
+    paths: List[str] = []
+    for cam in cams:
+        hp = hit_template.format(camera=cam, cam=cam, root=str(root))
+        hp_path = Path(hp).expanduser()
+        if not hp_path.is_absolute():
+            hp_path = root / hp_path
+        paths.append(str(hp_path))
+    if hit_all:
+        ap = hit_all.format(root=str(root))
+        ap_path = Path(ap).expanduser()
+        if not ap_path.is_absolute():
+            ap_path = root / ap_path
+        paths.append(str(ap_path))
+    return paths, str(root)
+
+
+class JsonlTailer:
+    def __init__(self, paths: List[str], state: OverlayState, start_tail_bytes: int = 1_000_000):
+        self.paths = [str(p) for p in paths if str(p)]
+        self.state = state
+        self.offsets: Dict[str, int] = {}
+        self.start_tail_bytes = int(max(0, start_tail_bytes))
+
+    def poll(self, max_lines_per_file: int = 256) -> None:
+        for path in self.paths:
+            try:
+                if not os.path.exists(path):
+                    continue
+                size = os.path.getsize(path)
+                off = self.offsets.get(path)
+                if off is None:
+                    off = max(0, size - self.start_tail_bytes)
+                if size < off:
+                    off = 0
+                if size == off:
+                    self.offsets[path] = off
+                    continue
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    f.seek(off)
+                    lines = f.readlines()
+                    self.offsets[path] = f.tell()
+                for line in lines[-int(max_lines_per_file):]:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(obj, dict):
+                        self.state.update_from_overlay_msg(obj, source="jsonl")
+            except Exception:
+                continue
+
+
+
+def _resolve_human_jsonl_paths(args: argparse.Namespace, cams: List[str]) -> Tuple[List[str], str]:
+    """Resolve human_result JSONL paths.
+
+    Prefer --sync-root from the active launcher, but also include the root from
+    config when it differs.  This protects against older unified configs whose
+    sync.root still points at a previous test directory.
+    """
+    roots: List[Path] = []
+    templates: List[str] = [str(getattr(args, "human_jsonl_template", "human_result_{camera}.jsonl") or "human_result_{camera}.jsonl")]
+
+    def add_root(x: Any) -> None:
+        if not x:
+            return
+        r = Path(str(x)).expanduser()
+        if not r.is_absolute():
+            r = Path.cwd() / r
+        if str(r) not in [str(v) for v in roots]:
+            roots.append(r)
+
+    add_root(getattr(args, "sync_root", "sync_ipc"))
+    try:
+        cfg_path = str(getattr(args, "config", "") or "")
+        if cfg_path and os.path.exists(cfg_path):
+            with open(cfg_path, "r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            mvs = cfg.get("mvs_config", cfg) if isinstance(cfg, dict) else {}
+            sync = mvs.get("sync", {}) if isinstance(mvs, dict) else {}
+            direct = mvs.get("direct", {}) if isinstance(mvs, dict) else {}
+            common = direct.get("common", {}) if isinstance(direct, dict) else {}
+            if isinstance(sync, dict):
+                add_root(sync.get("root", ""))
+                ht = sync.get("human_jsonl_template", "")
+                if ht and str(ht) not in templates:
+                    templates.append(str(ht))
+            if isinstance(common, dict):
+                eht = common.get("event_human_mask_jsonl_template", "")
+                if eht and str(eht) not in templates:
+                    templates.append(str(eht))
+    except Exception as exc:
+        print(f"[pygl_cuda_preview][WARN] failed to parse human jsonl paths from config: {exc}", flush=True)
+
+    paths: List[str] = []
+    for root in roots:
+        for tmpl in templates:
+            for cam in cams:
+                try:
+                    hp = tmpl.format(camera=cam, cam=cam, root=str(root))
+                except Exception:
+                    hp = tmpl.replace("{camera}", cam).replace("{cam}", cam).replace("{root}", str(root))
+                hp_path = Path(hp).expanduser()
+                if not hp_path.is_absolute():
+                    hp_path = root / hp_path
+                sp = str(hp_path)
+                if sp not in paths:
+                    paths.append(sp)
+    roots_s = ",".join(str(x) for x in roots) if roots else ""
+    return paths, roots_s
+
+
+class HumanJsonlTailer(JsonlTailer):
+    def poll(self, max_lines_per_file: int = 96) -> None:
+        for path in self.paths:
+            try:
+                if not os.path.exists(path):
+                    continue
+                size = os.path.getsize(path)
+                off = self.offsets.get(path)
+                if off is None:
+                    off = max(0, size - self.start_tail_bytes)
+                if size < off:
+                    off = 0
+                if size == off:
+                    self.offsets[path] = off
+                    continue
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    f.seek(off)
+                    lines = f.readlines()
+                    self.offsets[path] = f.tell()
+                for line in lines[-int(max_lines_per_file):]:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        obj = json.loads(line)
+                    except Exception:
+                        continue
+                    if isinstance(obj, dict):
+                        self.state.update_from_human_msg(obj, source="human_jsonl")
+            except Exception:
+                continue
+
+
+class CudaPboVideoBackend:
+    def __init__(self, cuda_device: int, tile_w: int, tile_h: int, cam_count: int):
+        self.cuda_device = int(cuda_device)
+        self.tile_w = int(tile_w)
+        self.tile_h = int(tile_h)
+        self.cam_count = int(cam_count)
+        self.cuda = None
+        self.cudagl = None
+        self.ctx = None
+        self.streams: List[Any] = []
+        self.module = None
+        self.kernel = None
+        self.textures: List[int] = []
+        self.pbos: List[int] = []
+        self.resources: List[Any] = []
+        self.d_bayer: List[Any] = []
+        self.d_bayer_sizes: List[int] = []
+
+    def initialize(self) -> None:
+        try:
+            import pycuda.driver as cuda
+            import pycuda.gl as cudagl
+            from pycuda.compiler import SourceModule
+        except Exception as exc:
+            raise RuntimeError(f"PyCUDA with GL interop is required for CUDA preview: {type(exc).__name__}: {exc}") from exc
+        cuda.init()
+        dev = cuda.Device(self.cuda_device)
+        self.ctx = cudagl.make_context(dev)
+        self.cuda = cuda
+        self.cudagl = cudagl
+        self.module = SourceModule(CUDA_KERNEL, options=["-O3"])
+        self.kernel = self.module.get_function("bayer_resize_to_rgba")
+        self.streams = [cuda.Stream() for _ in range(self.cam_count)]
+
+        self.textures = []
+        self.pbos = []
+        self.resources = []
+        pbo_bytes = int(self.tile_w * self.tile_h * 4)
+        for _ in range(self.cam_count):
+            tex = GL.glGenTextures(1)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, GL.GL_CLAMP_TO_EDGE)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.tile_w, self.tile_h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, None)
+            pbo = GL.glGenBuffers(1)
+            GL.glBindBuffer(GL.GL_PIXEL_UNPACK_BUFFER, pbo)
+            GL.glBufferData(GL.GL_PIXEL_UNPACK_BUFFER, pbo_bytes, None, GL.GL_STREAM_DRAW)
+            GL.glBindBuffer(GL.GL_PIXEL_UNPACK_BUFFER, 0)
+            try:
+                res = cudagl.RegisteredBuffer(int(pbo), cudagl.graphics_map_flags.WRITE_DISCARD)
+            except AttributeError:
+                # Older pycuda.gl exposes flags through cuda.graphics_map_flags.
+                res = cudagl.RegisteredBuffer(int(pbo), cuda.graphics_map_flags.WRITE_DISCARD)
+            self.textures.append(int(tex))
+            self.pbos.append(int(pbo))
+            self.resources.append(res)
+            self.d_bayer.append(None)
+            self.d_bayer_sizes.append(0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        print(f"[pygl_cuda_preview] CUDA-GL backend ready: device={dev.name()} cams={self.cam_count} tile={self.tile_w}x{self.tile_h}", flush=True)
+
+    @staticmethod
+    def _pattern_code(name: str) -> int:
+        return {"BG": 1, "RG": 2, "GB": 3, "GR": 4}.get(str(name or "BG").upper(), 1)
+
+    def update_texture(self, cam_idx: int, raw: np.ndarray, meta: Dict[str, Any]) -> None:
+        cuda = self.cuda
+        if cuda is None or self.kernel is None:
+            raise RuntimeError("CUDA backend not initialized")
+        h = int(meta.get("height", raw.shape[0]))
+        w = int(meta.get("width", raw.shape[1]))
+        stride = int(meta.get("stride", raw.shape[1]))
+        nbytes = int(h * stride)
+        if self.d_bayer[cam_idx] is None or self.d_bayer_sizes[cam_idx] < nbytes:
+            self.d_bayer[cam_idx] = cuda.mem_alloc(nbytes)
+            self.d_bayer_sizes[cam_idx] = nbytes
+        arr = np.asarray(raw)
+        if not arr.flags.c_contiguous:
+            arr = np.ascontiguousarray(arr)
+        stream = self.streams[cam_idx]
+        cuda.memcpy_htod_async(self.d_bayer[cam_idx], arr, stream)
+
+        mapping = self.resources[cam_idx].map(stream)
+        try:
+            dptr, size = mapping.device_ptr_and_size()
+            block = (16, 16, 1)
+            grid = ((self.tile_w + block[0] - 1) // block[0], (self.tile_h + block[1] - 1) // block[1], 1)
+            self.kernel(
+                self.d_bayer[cam_idx], np.int32(w), np.int32(h), np.int32(stride),
+                np.intp(dptr), np.int32(self.tile_w), np.int32(self.tile_h),
+                np.int32(self._pattern_code(str(meta.get("bayer_pattern", "BG")))),
+                block=block, grid=grid, stream=stream,
+            )
+        finally:
+            mapping.unmap(stream)
+        stream.synchronize()
+
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.textures[cam_idx])
+        GL.glBindBuffer(GL.GL_PIXEL_UNPACK_BUFFER, self.pbos[cam_idx])
+        GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, self.tile_w, self.tile_h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, ctypes.c_void_p(0))
+        GL.glBindBuffer(GL.GL_PIXEL_UNPACK_BUFFER, 0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
+    def release(self) -> None:
+        try:
+            for res in self.resources:
+                try:
+                    res.unregister()
+                except Exception:
+                    pass
+        finally:
+            self.resources = []
+        if self.ctx is not None:
+            try:
+                self.ctx.pop()
+                self.ctx.detach()
+            except Exception:
+                pass
+            self.ctx = None
+
+
+class CpuUploadFallbackBackend:
+    def __init__(self, tile_w: int, tile_h: int, cam_count: int):
+        self.tile_w = int(tile_w)
+        self.tile_h = int(tile_h)
+        self.cam_count = int(cam_count)
+        self.textures: List[int] = []
+
+    def initialize(self) -> None:
+        try:
+            import cv2  # noqa
+        except Exception as exc:
+            raise RuntimeError(f"CPU fallback requires cv2: {exc}")
+        self.textures = []
+        for _ in range(self.cam_count):
+            tex = GL.glGenTextures(1)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, tex)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, GL.GL_LINEAR)
+            GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, GL.GL_LINEAR)
+            GL.glTexImage2D(GL.GL_TEXTURE_2D, 0, GL.GL_RGBA8, self.tile_w, self.tile_h, 0, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, None)
+            self.textures.append(int(tex))
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        print("[pygl_cuda_preview][WARN] using CPU upload fallback; CUDA-GL objective is NOT met", flush=True)
+
+    def update_texture(self, cam_idx: int, raw: np.ndarray, meta: Dict[str, Any]) -> None:
+        import cv2
+        bayer = np.asarray(raw[:, :int(meta.get("width", raw.shape[1]))])
+        pat = str(meta.get("bayer_pattern", "BG")).upper()
+        code = {
+            "BG": cv2.COLOR_BayerBG2RGB,
+            "RG": cv2.COLOR_BayerRG2RGB,
+            "GB": cv2.COLOR_BayerGB2RGB,
+            "GR": cv2.COLOR_BayerGR2RGB,
+        }.get(pat, cv2.COLOR_BayerBG2RGB)
+        rgb = cv2.cvtColor(bayer, code)
+        small = cv2.resize(rgb, (self.tile_w, self.tile_h), interpolation=cv2.INTER_AREA)
+        rgba = np.empty((self.tile_h, self.tile_w, 4), dtype=np.uint8)
+        rgba[:, :, :3] = small
+        rgba[:, :, 3] = 255
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.textures[cam_idx])
+        GL.glTexSubImage2D(GL.GL_TEXTURE_2D, 0, 0, 0, self.tile_w, self.tile_h, GL.GL_RGBA, GL.GL_UNSIGNED_BYTE, rgba)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+
+    def release(self) -> None:
+        pass
+
+
+class PreviewWidget(QOpenGLWidget):
+    def __init__(self, args: argparse.Namespace):
+        super().__init__()
+        self.args = args
+        self.cams = _parse_cams(args.cams)
+        if not self.cams:
+            raise RuntimeError("no cameras specified")
+        self.rows, self.cols = _grid_layout(self.cams, args.layout)
+        self.tile_w = int(args.tile_width)
+        self.tile_h = int(args.tile_height)
+        self.setWindowTitle("PyOpenGL CUDA Preview 40Hz video / 250Hz trajectory")
+        self.resize(int(args.window_width), int(args.window_height))
+        self.readers: Dict[str, RawPreviewFrameReader] = {}
+        self.reader_errors: Dict[str, str] = {}
+        self.last_video_update_ns = 0
+        self.last_frame_ids = {c: -1 for c in self.cams}
+        self.video_backend: Any = None
+        self.trajectory_reader: Optional[PreviewTrajectoryReader] = None
+        self.trajectory_vbo = 0
+        self.trajectory_vertex_count = 0
+        self.last_traj_update_ns = 0
+        self.frame_counter = 0
+        self.t0 = time.time()
+        self.overlay_state = OverlayState(self.cams)
+        self.overlay_ws_client: Optional[OverlayWsClient] = None
+        self.hit_tailer: Optional[JsonlTailer] = None
+        self.human_tailer: Optional[HumanJsonlTailer] = None
+        self.last_status_ms = 0.0
+
+        self.render_timer = QTimer(self)
+        self.render_timer.setTimerType(Qt.PreciseTimer)
+        self.render_timer.timeout.connect(self._render_tick)
+        self.video_timer = QTimer(self)
+        self.video_timer.setTimerType(Qt.PreciseTimer)
+        self.video_timer.timeout.connect(self._video_tick)
+        self.overlay_timer = QTimer(self)
+        self.overlay_timer.setTimerType(Qt.PreciseTimer)
+        self.overlay_timer.timeout.connect(self._overlay_tick)
+
+    def initializeGL(self) -> None:
+        vendor = GL.glGetString(GL.GL_VENDOR)
+        renderer = GL.glGetString(GL.GL_RENDERER)
+        version = GL.glGetString(GL.GL_VERSION)
+        print(f"[pygl_cuda_preview] GL_VENDOR={vendor!r} GL_RENDERER={renderer!r} GL_VERSION={version!r}", flush=True)
+        if not bool(self.args.allow_non_nvidia_gl):
+            text = (renderer or b"").decode("utf-8", errors="ignore").lower() + " " + (vendor or b"").decode("utf-8", errors="ignore").lower()
+            if "nvidia" not in text:
+                raise RuntimeError("CUDA-GL interop requires the OpenGL context on NVIDIA GPU; pass --allow-non-nvidia-gl only for debugging")
+
+        GL.glDisable(GL.GL_DEPTH_TEST)
+        GL.glEnable(GL.GL_BLEND)
+        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        GL.glClearColor(0.02, 0.02, 0.025, 1.0)
+
+        for cam in self.cams:
+            name = _shm_name_from_template(self.args.raw_template, cam)
+            try:
+                self.readers[cam] = RawPreviewFrameReader(name)
+                print(f"[pygl_cuda_preview][{cam}] raw shm opened: {name}", flush=True)
+            except Exception as exc:
+                self.reader_errors[cam] = f"{type(exc).__name__}: {exc}"
+                print(f"[pygl_cuda_preview][{cam}][WARN] raw shm not ready: {name}: {exc}", flush=True)
+
+        try:
+            if self.args.allow_cpu_upload_fallback:
+                try:
+                    self.video_backend = CudaPboVideoBackend(self.args.cuda_device, self.tile_w, self.tile_h, len(self.cams))
+                    self.video_backend.initialize()
+                except Exception as exc:
+                    print(f"[pygl_cuda_preview][WARN] CUDA-GL init failed, fallback CPU upload: {exc}", flush=True)
+                    self.video_backend = CpuUploadFallbackBackend(self.tile_w, self.tile_h, len(self.cams))
+                    self.video_backend.initialize()
+            else:
+                self.video_backend = CudaPboVideoBackend(self.args.cuda_device, self.tile_w, self.tile_h, len(self.cams))
+                self.video_backend.initialize()
+        except Exception:
+            raise
+
+        try:
+            self.trajectory_reader = PreviewTrajectoryReader(self.args.trajectory_shm)
+            print(f"[pygl_cuda_preview] trajectory shm opened: {self.args.trajectory_shm}", flush=True)
+        except Exception as exc:
+            print(f"[pygl_cuda_preview][WARN] trajectory shm not ready: {self.args.trajectory_shm}: {exc}", flush=True)
+            self.trajectory_reader = None
+
+        if not bool(self.args.overlay_ws_disable):
+            url = str(self.args.overlay_ws_url or "").strip()
+            if url:
+                self.overlay_ws_client = OverlayWsClient(url, self.overlay_state, enabled=True)
+                self.overlay_ws_client.start()
+
+        if bool(self.args.hit_jsonl_enable):
+            hit_paths, sync_root_s = _resolve_hit_jsonl_paths(self.args, self.cams)
+            self.hit_tailer = JsonlTailer(hit_paths, self.overlay_state)
+            print(f"[pygl_cuda_preview] hit_candidate jsonl tailer paths={len(hit_paths)} root={sync_root_s}", flush=True)
+
+        if bool(self.args.human_jsonl_enable):
+            human_paths, human_roots_s = _resolve_human_jsonl_paths(self.args, self.cams)
+            self.human_tailer = HumanJsonlTailer(human_paths, self.overlay_state, start_tail_bytes=int(self.args.human_jsonl_tail_bytes))
+            print(f"[pygl_cuda_preview] human_result jsonl tailer paths={len(human_paths)} roots={human_roots_s}", flush=True)
+
+        self.trajectory_vbo = GL.glGenBuffers(1)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.trajectory_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, 4 * 6 * 131072, None, GL.GL_STREAM_DRAW)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+        self.video_timer.start(max(1, int(round(1000.0 / max(1e-3, float(self.args.video_fps))))))
+        self.render_timer.start(max(1, int(round(1000.0 / max(1e-3, float(self.args.render_fps))))))
+        self.overlay_timer.start(max(10, int(round(float(self.args.overlay_poll_ms)))))
+        print(
+            f"[pygl_cuda_preview] started video_fps={self.args.video_fps} render_fps={self.args.render_fps} "
+            f"trajectory_fps={self.args.trajectory_fps} tile={self.tile_w}x{self.tile_h} layout={self.rows}x{self.cols}",
+            flush=True,
+        )
+
+    def _try_open_missing_readers(self) -> None:
+        for cam in self.cams:
+            if cam in self.readers:
+                continue
+            name = _shm_name_from_template(self.args.raw_template, cam)
+            try:
+                self.readers[cam] = RawPreviewFrameReader(name)
+                print(f"[pygl_cuda_preview][{cam}] raw shm opened late: {name}", flush=True)
+            except Exception:
+                pass
+        if self.trajectory_reader is None:
+            try:
+                self.trajectory_reader = PreviewTrajectoryReader(self.args.trajectory_shm)
+                print(f"[pygl_cuda_preview] trajectory shm opened late: {self.args.trajectory_shm}", flush=True)
+            except Exception:
+                pass
+
+    def _video_tick(self) -> None:
+        self._try_open_missing_readers()
+        if self.video_backend is None:
+            return
+        for idx, cam in enumerate(self.cams):
+            rd = self.readers.get(cam)
+            if rd is None:
+                continue
+            try:
+                item = rd.read_latest_view(require_new=True)
+            except Exception as exc:
+                print(f"[pygl_cuda_preview][{cam}][WARN] read raw failed: {type(exc).__name__}: {exc}", flush=True)
+                continue
+            if item is None:
+                continue
+            if int(item.get("pixel_format", RAW_PIXEL_BAYER8)) != RAW_PIXEL_BAYER8:
+                print(f"[pygl_cuda_preview][{cam}][WARN] non-Bayer raw pixel_format={item.get('pixel_format')}; skip", flush=True)
+                continue
+            try:
+                self.video_backend.update_texture(idx, item["frame"], item)
+                self.last_frame_ids[cam] = int(item.get("frame_id", -1))
+            except Exception as exc:
+                print(f"[pygl_cuda_preview][{cam}][ERROR] update texture failed: {type(exc).__name__}: {exc}", flush=True)
+                if not self.args.allow_cpu_upload_fallback:
+                    raise
+
+    def _update_trajectory_vbo(self) -> None:
+        if self.trajectory_reader is None or self.trajectory_vbo == 0:
+            return
+        try:
+            segs = self.trajectory_reader.read_segments(max_age_ms=float(self.args.trajectory_life_ms), require_new=False)
+        except Exception:
+            return
+        if segs is None or len(segs) == 0:
+            self.trajectory_vertex_count = 0
+            return
+        rows, cols = self.rows, self.cols
+        verts: List[Tuple[float, float, float, float, float, float]] = []
+        now_ms = time.time() * 1000.0
+        for rec in segs[-int(self.args.max_trajectory_segments):]:
+            ci = int(rec["cam_index"])
+            if ci < 0 or ci >= len(self.cams):
+                continue
+            col = ci % cols
+            row = ci // cols
+            tile_x0 = -1.0 + 2.0 * (col / cols)
+            tile_y0 =  1.0 - 2.0 * ((row + 1) / rows)
+            tile_w_ndc = 2.0 / cols
+            tile_h_ndc = 2.0 / rows
+            dw = max(float(rec["display_w"]), 1.0)
+            dh = max(float(rec["display_h"]), 1.0)
+            x0 = tile_x0 + (float(rec["x0"]) / dw) * tile_w_ndc
+            x1 = tile_x0 + (float(rec["x1"]) / dw) * tile_w_ndc
+            y0 = tile_y0 + (1.0 - float(rec["y0"]) / dh) * tile_h_ndc
+            y1 = tile_y0 + (1.0 - float(rec["y1"]) / dh) * tile_h_ndc
+            age = max(0.0, now_ms - float(rec["ts_ms"]))
+            alpha = float(rec["a"]) * max(0.0, min(1.0, 1.0 - age / max(1.0, float(rec["life_ms"]))))
+            if alpha <= 0.01:
+                continue
+            color = (float(rec["r"]), float(rec["g"]), float(rec["b"]), alpha)
+            verts.append((x0, y0, color[0], color[1], color[2], color[3]))
+            verts.append((x1, y1, color[0], color[1], color[2], color[3]))
+        if not verts:
+            self.trajectory_vertex_count = 0
+            return
+        arr = np.asarray(verts, dtype=np.float32)
+        self.trajectory_vertex_count = int(arr.shape[0])
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.trajectory_vbo)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, int(arr.nbytes), arr, GL.GL_STREAM_DRAW)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+    def _overlay_tick(self) -> None:
+        if self.hit_tailer is not None:
+            self.hit_tailer.poll(max_lines_per_file=256)
+        if self.human_tailer is not None:
+            self.human_tailer.poll(max_lines_per_file=96)
+
+    def _render_tick(self) -> None:
+        # Trajectory redraw target is 250 FPS.  Data update is small and independent
+        # of video texture updates.
+        self._update_trajectory_vbo()
+        self.update()
+
+    def paintGL(self) -> None:
+        GL.glClear(GL.GL_COLOR_BUFFER_BIT)
+        self._draw_video_grid()
+        self._draw_human_masks()
+        self._draw_trajectory()
+        self._draw_overlay_markers()
+        self._draw_text_overlay()
+        self.frame_counter += 1
+        if self.frame_counter % max(1, int(float(self.args.render_fps) * 5.0)) == 0:
+            dt = max(1e-6, time.time() - self.t0)
+            print(f"[pygl_cuda_preview] render_fps={self.frame_counter/dt:.1f} last_frame_ids={self.last_frame_ids}", flush=True)
+
+    def _draw_video_grid(self) -> None:
+        if self.video_backend is None:
+            return
+        GL.glEnable(GL.GL_TEXTURE_2D)
+        rows, cols = self.rows, self.cols
+        for i, cam in enumerate(self.cams):
+            if i >= len(self.video_backend.textures):
+                continue
+            col = i % cols
+            row = i // cols
+            x0 = -1.0 + 2.0 * (col / cols)
+            x1 = -1.0 + 2.0 * ((col + 1) / cols)
+            y0 = 1.0 - 2.0 * ((row + 1) / rows)
+            y1 = 1.0 - 2.0 * (row / rows)
+            GL.glBindTexture(GL.GL_TEXTURE_2D, self.video_backend.textures[i])
+            GL.glColor4f(1.0, 1.0, 1.0, 1.0)
+            GL.glBegin(GL.GL_QUADS)
+            GL.glTexCoord2f(0.0, 1.0); GL.glVertex2f(x0, y0)
+            GL.glTexCoord2f(1.0, 1.0); GL.glVertex2f(x1, y0)
+            GL.glTexCoord2f(1.0, 0.0); GL.glVertex2f(x1, y1)
+            GL.glTexCoord2f(0.0, 0.0); GL.glVertex2f(x0, y1)
+            GL.glEnd()
+        GL.glBindTexture(GL.GL_TEXTURE_2D, 0)
+        GL.glDisable(GL.GL_TEXTURE_2D)
+
+    def _draw_trajectory(self) -> None:
+        if self.trajectory_vbo == 0 or self.trajectory_vertex_count <= 0:
+            return
+        GL.glLineWidth(float(self.args.trajectory_line_width))
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.trajectory_vbo)
+        stride = 6 * 4
+        GL.glEnableClientState(GL.GL_VERTEX_ARRAY)
+        GL.glEnableClientState(GL.GL_COLOR_ARRAY)
+        GL.glVertexPointer(2, GL.GL_FLOAT, stride, ctypes.c_void_p(0))
+        GL.glColorPointer(4, GL.GL_FLOAT, stride, ctypes.c_void_p(2 * 4))
+        GL.glDrawArrays(GL.GL_LINES, 0, int(self.trajectory_vertex_count))
+        GL.glDisableClientState(GL.GL_COLOR_ARRAY)
+        GL.glDisableClientState(GL.GL_VERTEX_ARRAY)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+
+    def _tile_ndc_for_cam(self, cam: str, x: float, y: float, dw: float, dh: float) -> Optional[Tuple[float, float]]:
+        try:
+            ci = self.cams.index(str(cam))
+        except ValueError:
+            return None
+        col = ci % self.cols
+        row = ci // self.cols
+        tile_x0 = -1.0 + 2.0 * (col / self.cols)
+        tile_y0 =  1.0 - 2.0 * ((row + 1) / self.rows)
+        tile_w_ndc = 2.0 / self.cols
+        tile_h_ndc = 2.0 / self.rows
+        xx = tile_x0 + (float(x) / max(float(dw), 1.0)) * tile_w_ndc
+        yy = tile_y0 + (1.0 - float(y) / max(float(dh), 1.0)) * tile_h_ndc
+        return float(xx), float(yy)
+
+    def _tile_px_for_cam(self, cam: str, x: float, y: float, dw: float, dh: float) -> Optional[Tuple[float, float]]:
+        try:
+            ci = self.cams.index(str(cam))
+        except ValueError:
+            return None
+        col = ci % self.cols
+        row = ci // self.cols
+        tile_w_px = max(1.0, float(self.width()) / max(1, self.cols))
+        tile_h_px = max(1.0, float(self.height()) / max(1, self.rows))
+        px = col * tile_w_px + (float(x) / max(float(dw), 1.0)) * tile_w_px
+        py = row * tile_h_px + (float(y) / max(float(dh), 1.0)) * tile_h_px
+        return float(px), float(py)
+
+    def _draw_circle_ndc(self, x: float, y: float, radius_ndc: float, color: Tuple[float, float, float, float], segments: int = 32) -> None:
+        GL.glColor4f(float(color[0]), float(color[1]), float(color[2]), float(color[3]))
+        GL.glBegin(GL.GL_LINE_LOOP)
+        for k in range(int(segments)):
+            a = 2.0 * np.pi * float(k) / float(segments)
+            GL.glVertex2f(float(x + np.cos(a) * radius_ndc), float(y + np.sin(a) * radius_ndc))
+        GL.glEnd()
+        # Crosshair improves visibility on bright backgrounds.
+        GL.glBegin(GL.GL_LINES)
+        GL.glVertex2f(float(x - radius_ndc * 1.4), float(y)); GL.glVertex2f(float(x + radius_ndc * 1.4), float(y))
+        GL.glVertex2f(float(x), float(y - radius_ndc * 1.4)); GL.glVertex2f(float(x), float(y + radius_ndc * 1.4))
+        GL.glEnd()
+
+    def _draw_human_masks(self) -> None:
+        if not bool(self.args.human_mask_draw_enable):
+            return
+        snap = self.overlay_state.snapshot(marker_ttl_ms=float(self.args.overlay_marker_life_ms), text_ttl_ms=float(self.args.overlay_text_life_ms))
+        humans = snap.get("humans", {})
+        if not humans:
+            return
+        now = _now_ms()
+        painter = QPainter(self)
+        try:
+            painter.setRenderHint(QPainter.Antialiasing, True)
+            font = QFont("DejaVu Sans Mono", max(10, int(self.args.status_font_px) - 1))
+            painter.setFont(font)
+            fill = QBrush(QColor(0, 210, 70, int(self.args.human_mask_alpha)))
+            outline = QPen(QColor(0, 255, 120, 230))
+            outline.setWidthF(float(self.args.human_mask_line_width))
+            bbox_pen = QPen(QColor(255, 230, 60, 230))
+            bbox_pen.setWidthF(float(self.args.human_bbox_line_width))
+            text_pen = QPen(QColor(235, 255, 235, 245))
+            bg = QColor(0, 0, 0, 135)
+            line_h = int(self.args.status_font_px) + 4
+            for cam, rec in humans.items():
+                if now - _safe_float(rec.get("ts_ms", 0.0), 0.0) > float(self.args.human_mask_life_ms):
+                    continue
+                fw = _safe_float(rec.get("frame_w", 1), 1.0)
+                fh = _safe_float(rec.get("frame_h", 1), 1.0)
+                persons = rec.get("persons", [])
+                if not isinstance(persons, list):
+                    continue
+                for person in persons[:int(self.args.max_human_draw)]:
+                    if not isinstance(person, dict):
+                        continue
+                    conf = _safe_float(person.get("confidence", 0.0), 0.0)
+                    if conf < float(self.args.human_min_conf):
+                        continue
+                    drew_poly = False
+                    polygons = person.get("mask_polygons", [])
+                    if isinstance(polygons, list) and bool(self.args.human_mask_fill_enable):
+                        painter.setBrush(fill)
+                        painter.setPen(outline)
+                        for poly in polygons[:int(self.args.max_human_polygons_per_person)]:
+                            if not isinstance(poly, list) or len(poly) < 3:
+                                continue
+                            qpoly = QPolygonF()
+                            for pt in poly[:int(self.args.max_human_polygon_points)]:
+                                if not isinstance(pt, (list, tuple)) or len(pt) < 2:
+                                    continue
+                                xy = self._tile_px_for_cam(str(cam), _safe_float(pt[0]), _safe_float(pt[1]), fw, fh)
+                                if xy is not None:
+                                    qpoly.append(QPointF(float(xy[0]), float(xy[1])))
+                            if qpoly.count() >= 3:
+                                painter.drawPolygon(qpoly)
+                                drew_poly = True
+                    bbox = person.get("bbox_xyxy", None)
+                    if isinstance(bbox, (list, tuple)) and len(bbox) >= 4:
+                        p0 = self._tile_px_for_cam(str(cam), _safe_float(bbox[0]), _safe_float(bbox[1]), fw, fh)
+                        p1 = self._tile_px_for_cam(str(cam), _safe_float(bbox[2]), _safe_float(bbox[3]), fw, fh)
+                        if p0 is not None and p1 is not None:
+                            painter.setBrush(Qt.NoBrush)
+                            painter.setPen(bbox_pen if drew_poly else outline)
+                            x0, y0 = p0
+                            x1, y1 = p1
+                            painter.drawRect(int(min(x0, x1)), int(min(y0, y1)), int(abs(x1 - x0)), int(abs(y1 - y0)))
+                            sid = person.get("stable_id", person.get("person_id", ""))
+                            txt = f"id={sid} {conf:.2f}"
+                            tx = int(min(x0, x1))
+                            ty = max(14, int(min(y0, y1)) - 3)
+                            painter.fillRect(tx, ty - line_h + 2, min(170, 8 + len(txt) * max(7, int(self.args.status_font_px) - 2)), line_h + 3, bg)
+                            painter.setPen(text_pen)
+                            painter.drawText(tx + 4, ty, txt)
+        finally:
+            painter.end()
+
+    def _draw_overlay_markers(self) -> None:
+        snap = self.overlay_state.snapshot(marker_ttl_ms=float(self.args.overlay_marker_life_ms), text_ttl_ms=float(self.args.overlay_text_life_ms))
+        markers = snap.get("markers", [])
+        if not markers:
+            return
+        w = max(float(self.width()), 1.0)
+        h = max(float(self.height()), 1.0)
+        # Approximate pixel radius in NDC, adjusted by the larger dimension.
+        GL.glLineWidth(float(self.args.overlay_marker_line_width))
+        for m in markers[-int(self.args.max_overlay_markers):]:
+            xy = self._tile_ndc_for_cam(m.get("cam", ""), _safe_float(m.get("x")), _safe_float(m.get("y")), _safe_float(m.get("display_w", 1), 1), _safe_float(m.get("display_h", 1), 1))
+            if xy is None:
+                continue
+            r_px = _safe_float(m.get("radius_px", 10.0), 10.0)
+            r_ndc = max(0.002, r_px * 2.0 / max(w, h))
+            color = tuple(m.get("color", _marker_color(str(m.get("kind", "event")))))
+            self._draw_circle_ndc(xy[0], xy[1], r_ndc, color)  # type: ignore[arg-type]
+
+    def _draw_text_overlay(self) -> None:
+        if not bool(self.args.status_text_enable):
+            return
+        snap = self.overlay_state.snapshot(marker_ttl_ms=float(self.args.overlay_marker_life_ms), text_ttl_ms=float(self.args.overlay_text_life_ms))
+        painter = QPainter(self)
+        try:
+            painter.setRenderHint(QPainter.TextAntialiasing, True)
+            font = QFont("DejaVu Sans Mono", int(self.args.status_font_px))
+            painter.setFont(font)
+            pen_info = QPen(QColor(230, 245, 255, 235))
+            pen_warn = QPen(QColor(255, 210, 60, 240))
+            pen_hit = QPen(QColor(255, 80, 40, 245))
+            bg = QColor(0, 0, 0, 135)
+            line_h = int(self.args.status_font_px) + 5
+            y = 8
+            dt = max(1e-6, time.time() - self.t0)
+            ws_state = "ON" if snap.get("ws_connected") else "OFF"
+            header = (
+                f"CUDA preview video={float(self.args.video_fps):.0f}Hz render={self.frame_counter/dt:.1f}fps "
+                f"traj_vtx={self.trajectory_vertex_count} ws={ws_state} rx={snap.get('ws_rx_count', 0)} "
+                f"hit_jsonl={snap.get('hit_jsonl_rx_count', 0)} human_jsonl={snap.get('human_jsonl_rx_count', 0)}"
+            )
+            painter.fillRect(6, 4, min(self.width() - 12, 1260), line_h + 6, bg)
+            painter.setPen(pen_info)
+            painter.drawText(12, y + line_h, header)
+            y += line_h + 8
+
+            # Per-tile camera labels and current frame ids.
+            tile_w_px = max(1, int(self.width() / max(1, self.cols)))
+            tile_h_px = max(1, int(self.height() / max(1, self.rows)))
+            for i, cam in enumerate(self.cams):
+                col = i % self.cols
+                row = i // self.cols
+                x0 = int(col * tile_w_px + 10)
+                y0 = int(row * tile_h_px + 22)
+                txt = f"{cam} fid={self.last_frame_ids.get(cam, -1)}"
+                painter.fillRect(x0 - 4, y0 - line_h + 2, 170, line_h + 4, bg)
+                painter.setPen(pen_info)
+                painter.drawText(x0, y0, txt)
+
+            # Recent text events from websocket / hit_candidate jsonl.
+            tx = 12
+            ty = y + line_h
+            for t in list(snap.get("texts", []))[-int(self.args.max_overlay_text_lines):]:
+                level = str(t.get("level", "info"))
+                painter.setPen(pen_hit if level == "hit" else (pen_warn if level in {"warn", "marker"} else pen_info))
+                painter.fillRect(tx - 4, ty - line_h + 2, min(self.width() - 20, 900), line_h + 4, bg)
+                painter.drawText(tx, ty, str(t.get("text", "")))
+                ty += line_h
+
+            # Marker labels next to points.
+            for m in list(snap.get("markers", []))[-int(self.args.max_overlay_marker_labels):]:
+                label = str(m.get("label", ""))
+                if not label:
+                    continue
+                xy = self._tile_px_for_cam(m.get("cam", ""), _safe_float(m.get("x")), _safe_float(m.get("y")), _safe_float(m.get("display_w", 1), 1), _safe_float(m.get("display_h", 1), 1))
+                if xy is None:
+                    continue
+                px, py = xy
+                painter.setPen(pen_hit if str(m.get("kind")) == "hit" else pen_warn)
+                painter.fillRect(int(px) + 8, int(py) - line_h, min(260, 8 + len(label) * int(self.args.status_font_px)), line_h + 4, bg)
+                painter.drawText(int(px) + 12, int(py), label)
+        finally:
+            painter.end()
+
+    def closeEvent(self, event) -> None:  # type: ignore[override]
+        try:
+            if self.overlay_ws_client is not None:
+                self.overlay_ws_client.stop()
+        except Exception:
+            pass
+        try:
+            if self.video_backend is not None:
+                self.video_backend.release()
+        except Exception:
+            pass
+        return super().closeEvent(event)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description="Independent PyOpenGL/CUDA preview renderer: 40 FPS video + 250 FPS bullet trajectory")
+    ap.add_argument("--config", default="", help="Kept for launcher compatibility; not parsed by this renderer yet")
+    ap.add_argument("--cams", required=True)
+    ap.add_argument("--raw-template", default="mvs_raw_latest_{camera}")
+    ap.add_argument("--trajectory-shm", default="preview_trajectory")
+    ap.add_argument("--video-fps", type=float, default=40.0)
+    ap.add_argument("--render-fps", type=float, default=250.0)
+    ap.add_argument("--trajectory-fps", type=float, default=250.0)
+    ap.add_argument("--trajectory-life-ms", type=float, default=700.0)
+    ap.add_argument("--max-trajectory-segments", type=int, default=65536)
+    ap.add_argument("--trajectory-line-width", type=float, default=2.0)
+    ap.add_argument("--cuda-device", type=int, default=0)
+    ap.add_argument("--tile-width", type=int, default=640)
+    ap.add_argument("--tile-height", type=int, default=360)
+    ap.add_argument("--layout", default="grid2x4")
+    ap.add_argument("--window-width", type=int, default=2560)
+    ap.add_argument("--window-height", type=int, default=1440)
+    ap.add_argument("--vsync", type=int, default=0)
+    ap.add_argument("--sync-root", default="sync_ipc")
+    ap.add_argument("--overlay-ws-url", default="ws://127.0.0.1:8765")
+    ap.add_argument("--overlay-ws-disable", action="store_true")
+    ap.add_argument("--hit-jsonl-enable", action="store_true", default=True)
+    ap.add_argument("--hit-jsonl-template", default="hit_candidate_{camera}.jsonl")
+    ap.add_argument("--hit-all-jsonl", default="hit_candidate_all.jsonl")
+    ap.add_argument("--overlay-poll-ms", type=float, default=50.0)
+    ap.add_argument("--overlay-marker-life-ms", type=float, default=3000.0)
+    ap.add_argument("--overlay-text-life-ms", type=float, default=3200.0)
+    ap.add_argument("--overlay-marker-line-width", type=float, default=2.5)
+    ap.add_argument("--max-overlay-markers", type=int, default=4096)
+    ap.add_argument("--max-overlay-marker-labels", type=int, default=96)
+    ap.add_argument("--max-overlay-text-lines", type=int, default=12)
+    ap.add_argument("--status-text-enable", action="store_true", default=True)
+    ap.add_argument("--status-font-px", type=int, default=15)
+    ap.add_argument("--human-jsonl-enable", action="store_true", default=True)
+    ap.add_argument("--human-jsonl-template", default="human_result_{camera}.jsonl")
+    ap.add_argument("--human-jsonl-tail-bytes", type=int, default=4_000_000)
+    ap.add_argument("--human-mask-draw-enable", action="store_true", default=True)
+    ap.add_argument("--human-mask-fill-enable", action="store_true", default=True)
+    ap.add_argument("--human-mask-life-ms", type=float, default=5000.0)
+    ap.add_argument("--human-min-conf", type=float, default=0.15)
+    ap.add_argument("--human-mask-alpha", type=int, default=70)
+    ap.add_argument("--human-mask-line-width", type=float, default=1.5)
+    ap.add_argument("--human-bbox-line-width", type=float, default=1.5)
+    ap.add_argument("--max-human-draw", type=int, default=32)
+    ap.add_argument("--max-human-polygons-per-person", type=int, default=8)
+    ap.add_argument("--max-human-polygon-points", type=int, default=512)
+    ap.add_argument("--allow-cpu-upload-fallback", action="store_true")
+    ap.add_argument("--allow-non-nvidia-gl", action="store_true")
+    args = ap.parse_args()
+
+    fmt = QSurfaceFormat()
+    fmt.setVersion(2, 1)
+    fmt.setProfile(QSurfaceFormat.CompatibilityProfile)
+    fmt.setSwapInterval(int(args.vsync))
+    QSurfaceFormat.setDefaultFormat(fmt)
+
+    app = QApplication(sys.argv[:1])
+    w = PreviewWidget(args)
+    w.show()
+    return int(app.exec())
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

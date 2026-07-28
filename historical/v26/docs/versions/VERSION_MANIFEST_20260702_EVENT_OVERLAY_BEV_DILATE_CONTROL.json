@@ -1,0 +1,105 @@
+{
+  "node_name": "A-TEST-20260702-EVENT-OVERLAY-BEV-DILATE-CONTROL",
+  "created_at_local": "2026-07-02",
+  "local_timezone": "Asia/Shanghai",
+  "local_worktree": "C:/Users/axyis/Documents/判定开发/workspace_a_global_id_position_hotupdate_pressure_20260702_2010",
+  "remote_host": "ysxq@192.168.31.115",
+  "remote_project": "/home/ysxq/PycharmProjects/Ids_Test_3.9/test622yolo_gpu_627",
+  "launcher_profile": "launch_profiles/627_event_overlay_bev.json",
+  "runtime_environment": {
+    "conda_env": "ids_recv",
+    "display": ":1",
+    "cuda_visible_devices": "0",
+    "glx_vendor": "nvidia",
+    "prime_render_offload": "1",
+    "gl_sync_to_vblank": "0"
+  },
+  "version_management": {
+    "git_repository": false,
+    "strategy": "archive_and_manifest",
+    "local_archive": "C:/Users/axyis/Documents/判定开发/A_TEST_NODE_20260702_EVENT_OVERLAY_BEV_DILATE_CONTROL_WORKTREE.zip",
+    "local_archive_sha256": "C:/Users/axyis/Documents/判定开发/A_TEST_NODE_20260702_EVENT_OVERLAY_BEV_DILATE_CONTROL_WORKTREE.zip.sha256",
+    "remote_pre_patch_backup": "sync_ipc/full_system_tests/pre_event_overlay_window_bev_dilate_20260702_223131.tar.gz",
+    "remote_closure_archive": "sync_ipc/full_system_tests/node_event_overlay_bev_dilate_closure_20260702_224945.tar.gz"
+  },
+  "changed_files": [
+    "global_bev_fusion_renderer.py",
+    "pyopengl_cuda_preview_renderer.py",
+    "event_overlay_overview_renderer.py",
+    "launch_fusion_system.py",
+    "launch_profiles/627_event_overlay_bev.json",
+    "docs/versions/NODE_VERSION_20260702_A_TEST_EVENT_OVERLAY_BEV_DILATE_CONTROL.md",
+    "docs/reports/HANDOFF_20260702_EVENT_OVERLAY_BEV_DILATE_CONTROL.md",
+    "docs/versions/VERSION_MANIFEST_20260702_EVENT_OVERLAY_BEV_DILATE_CONTROL.json",
+    "WORKTREE_START_HERE_20260702.md"
+  ],
+  "feature_controls": {
+    "event_overlay_overview_window": {
+      "control_json": "sync_ipc/event_overlay_overview_control.json",
+      "status_json": "sync_ipc/event_overlay_overview_status.json",
+      "control_key": "event_overlay_overview_visible",
+      "status_keys": [
+        "control.visible_requested",
+        "control.window_visible",
+        "control.error"
+      ]
+    },
+    "global_bev_event_layer": {
+      "control_json": "sync_ipc/global_bev_control.json",
+      "status_json": "sync_ipc/global_bev_status.json",
+      "enable_key": "show_event_layer",
+      "dilate_key": "event_layer_dilate_px",
+      "default_dilate_px": 16,
+      "default_dilate_max_pixels": 2500,
+      "status_keys": [
+        "event_layer.enabled",
+        "event_layer.dilate_px",
+        "event_layer.dilate_backend",
+        "event_layer.dilate_max_pixels",
+        "event_layer.dilate_skipped_dense_cam_count"
+      ]
+    }
+  },
+  "validation": {
+    "local_py_compile": "passed",
+    "local_profile_json_parse": "passed",
+    "remote_py_compile": "passed",
+    "remote_cv2_version": "4.13.0",
+    "remote_validation_run": "sync_ipc/full_system_tests/fullsys_20min_bev_event_layer_20260702_224502_display1_keepstdin",
+    "remote_status_summary": {
+      "global_bev_render_fps": "about 30 fps",
+      "global_bev_output_fps": "about 10 fps",
+      "global_bev_last_error": "",
+      "event_layer_enabled": true,
+      "event_layer_dilate_px": 16,
+      "event_layer_dilate_backend": "cv2_dilate",
+      "event_layer_dilate_skipped_dense_cam_count": 0,
+      "event_overlay_overview_visible": true,
+      "event_overlay_overview_requested": true,
+      "event_overlay_overview_error": ""
+    },
+    "hot_switch": {
+      "event_overlay_hide_restore": "passed",
+      "bev_dilate_16_to_32_to_16": "passed",
+      "render_fps_while_switching": "near 30 fps"
+    },
+    "log_scan": {
+      "global_bev_errors": 0,
+      "event_overview_errors": 0,
+      "pyopengl_cuda_preview_gl_cuda_errors": 0
+    }
+  },
+  "known_risks": [
+    "This node changes visualization/control behavior, not final hit detection logic.",
+    "Dense event bursts can still increase BEV upload cost; dilation is capped by dilate_max_pixels.",
+    "Future calibration or mirror-mode changes must recheck BEV overlay alignment.",
+    "The worktree is archive-managed because it is not a git repository."
+  ],
+  "next_workstreams": [
+    "Global unique player ID stability",
+    "Global real-time player position service",
+    "Preview-window hot-update controls",
+    "System pressure optimization and long-run validation",
+    "Status window key/type compatibility checks"
+  ]
+}

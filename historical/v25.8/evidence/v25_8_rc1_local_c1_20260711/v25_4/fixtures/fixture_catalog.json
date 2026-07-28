@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "kind": "v25_4_fixture_catalog",
+  "validation_scope": "synthetic_truth",
+  "identity_truth": true,
+  "field_effectiveness": "not_validated",
+  "streams": {
+    "world_snapshots.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c1_20260711\\v25_4\\fixtures\\world_snapshots.jsonl",
+      "rows": 5,
+      "sha256": "993ec49ba14e9cf73f0c2248453fd577c919e792403a74a93566c2b927a76e2f"
+    },
+    "person_masks.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c1_20260711\\v25_4\\fixtures\\person_masks.jsonl",
+      "rows": 3,
+      "sha256": "eb13c5de3dfefd55ef894c47c840c5557d652ab17874d265d14bebdd26ac5675"
+    },
+    "event_trajectories.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c1_20260711\\v25_4\\fixtures\\event_trajectories.jsonl",
+      "rows": 4,
+      "sha256": "70148a53e4117394e13a5c181997aaef45c6d2cb7a9d4e0d9ace49c48f6afb70"
+    },
+    "trigger_evidence.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c1_20260711\\v25_4\\fixtures\\trigger_evidence.jsonl",
+      "rows": 3,
+      "sha256": "8e91d7c3a6756d2aab0b957373f9d8e9bdeafacb2b38ad95f2d30f96def440ae"
+    },
+    "expected_combat.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c1_20260711\\v25_4\\fixtures\\expected_combat.jsonl",
+      "rows": 4,
+      "sha256": "240f68681a954bbc32b658657370609d46914cf02352ef998caea6610b35d55c"
+    }
+  },
+  "scenarios": [
+    "empty",
+    "single_terminal_hit",
+    "two_person_turn_hit",
+    "miss",
+    "human_noise"
+  ]
+}

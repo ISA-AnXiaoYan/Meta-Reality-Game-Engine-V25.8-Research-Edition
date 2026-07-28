@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "updated": "2026-07-10",
+  "policy": "Each runtime role has one canonical source path. Legacy aliases are compatibility-only and must not receive independent feature edits.",
+  "entrypoints": [
+    {"id": "system_launcher", "owner": "platform_runtime", "path": "launch_fusion_system.py", "lifecycle": "production", "aliases": ["launch_fusion_system_syncstart.py"]},
+    {"id": "event_supervisor", "owner": "event_runtime", "path": "multi_camera_launcher.py", "lifecycle": "production", "aliases": ["cpp_bullet_core/multi_camera_launcher.py"]},
+    {"id": "event_worker", "owner": "event_runtime", "path": "metavision_spatter_tracking_linefilter_tsf1_autosender_backfill.py", "lifecycle": "production", "aliases": ["cpp_bullet_core/metavision_spatter_tracking_linefilter_tsf1_autosender_backfill.py", "metavision_spatter_tracking_linefilter_tsf1_autosender_backfill_syncstart.py"]},
+    {"id": "mvs_yolo_aggregate", "owner": "mvs_yolo_runtime", "path": "hik_rgb_yolo_seg_multicam_same_model_stableid_v5.py", "lifecycle": "production", "aliases": ["rentijiance/hik_rgb_yolo_seg_multicam_same_model_stableid_v5.py", "cpp_bullet_core/hik_rgb_yolo_seg_multicam_same_model_stableid_v5.py", "cpp_bullet_core/rentijiance/hik_rgb_yolo_seg_multicam_same_model_stableid_v5.py"]},
+    {"id": "mvs_trigger_coordinator", "owner": "mvs_runtime", "path": "mvs_trigger_coordinator.py", "lifecycle": "production", "aliases": ["mvs_trigger_coordinator_syncstart.py"]},
+    {"id": "mvs_camera_worker", "owner": "mvs_runtime", "path": "mvs_cam_worker_external_trigger.py", "lifecycle": "production", "aliases": []},
+    {"id": "global_yolo_infer", "owner": "global_yolo", "path": "global_yolo_infer_server.py", "lifecycle": "production", "aliases": []},
+    {"id": "global_yolo_merge", "owner": "global_yolo", "path": "global_yolo_merge_publisher.py", "lifecycle": "production", "aliases": []},
+    {"id": "global_person_id", "owner": "global_identity", "path": "global_person_id_server.py", "lifecycle": "production", "aliases": []},
+    {"id": "hit_judge", "owner": "hit_runtime", "path": "hit_judge_server.py", "lifecycle": "production", "aliases": ["rentijiance/hit_judge_server.py", "cpp_bullet_core/rentijiance/hit_judge_server.py"]},
+    {"id": "event_mask_evidence", "owner": "hit_runtime", "path": "event_mask_evidence_service.py", "lifecycle": "production", "aliases": []},
+    {"id": "global_bullet_reprocess", "owner": "hit_runtime", "path": "global_bullet_reprocess_service.py", "lifecycle": "production", "aliases": []},
+    {"id": "global_bullet_fusion", "owner": "hit_runtime", "path": "global_bullet_fusion_service.py", "lifecycle": "production", "aliases": []},
+    {"id": "manual_hit", "owner": "hit_runtime", "path": "manual_hit_service.py", "lifecycle": "production_optional", "aliases": []},
+    {"id": "damage_attribution", "owner": "game_logic", "path": "damage_attribution_service.py", "lifecycle": "production_optional", "aliases": []},
+    {"id": "game_event_bridge", "owner": "game_bridge", "path": "game_event_bridge_service.py", "lifecycle": "production", "aliases": []},
+    {"id": "cuda_preview", "owner": "visualization", "path": "pyopengl_cuda_preview_renderer.py", "lifecycle": "production", "aliases": [], "historical_snapshots": ["archive/source_snapshots/pyopengl_cuda_preview_renderer.py.before_hitcoord"]},
+    {"id": "global_bev", "owner": "visualization", "path": "global_bev_fusion_renderer.py", "lifecycle": "production", "aliases": []},
+    {"id": "event_overlay_overview", "owner": "visualization", "path": "event_overlay_overview_renderer.py", "lifecycle": "production_optional", "aliases": []},
+    {"id": "legacy_gl_preview", "owner": "visualization", "path": "rentijiance/fusion_renderer_gl.py", "lifecycle": "legacy_fallback", "aliases": ["fusion_renderer_gl.py", "cpp_bullet_core/rentijiance/fusion_renderer_gl.py"]},
+    {"id": "person_dataset_recorder", "owner": "datasets", "path": "person_id_dataset_recorder.py", "lifecycle": "production_optional", "aliases": []},
+    {"id": "startup_control_panel", "owner": "platform_ops", "path": "remote_ops/v25_replay_control_panel.py", "lifecycle": "operations", "aliases": []}
+  ]
+}

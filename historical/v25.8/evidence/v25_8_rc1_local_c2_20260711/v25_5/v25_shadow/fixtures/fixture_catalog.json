@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "kind": "v25_5_perception_sync_fixture_catalog",
+  "validation_scope": "synthetic_perception_sync_truth",
+  "new_human_participation_required": false,
+  "read_only_source": true,
+  "official_writer_count": 0,
+  "cameras": [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+    "F",
+    "G",
+    "H"
+  ],
+  "streams": {
+    "mvs_frames.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\mvs_frames.jsonl",
+      "rows": 24,
+      "sha256": "b118d2d12117393675d025ab4326fbbc5085280c48174922272d3b383cbc43fb"
+    },
+    "mvs_video_index.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\mvs_video_index.jsonl",
+      "rows": 8,
+      "sha256": "c98bcc38df9b6eeac0d960e216fa0bc63a31735ea2b5acef9850126522e85a74"
+    },
+    "person_polygons.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\person_polygons.jsonl",
+      "rows": 8,
+      "sha256": "1237821c0f4d0ac2d5d51bc5e53aeca1f879ebeff342f0316bbed1b5d6bf0493"
+    },
+    "event_slices.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\event_slices.jsonl",
+      "rows": 24,
+      "sha256": "87662753be286659250055f8e91e555574535acaacf426938c8d08b3b46209ee"
+    },
+    "event_raw_index.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\event_raw_index.jsonl",
+      "rows": 8,
+      "sha256": "4e3b2efd981c939b9c18d4bb9216fb71357ecd58334a1163ba163dfa72607a5c"
+    },
+    "event_overlay_points.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\event_overlay_points.jsonl",
+      "rows": 8,
+      "sha256": "cd4be208844112416e8bb28754b8e55e4057435ae80961da1e7efe15777f5589"
+    },
+    "event_stable_tracks.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\event_stable_tracks.jsonl",
+      "rows": 8,
+      "sha256": "1f1e9e655c6aa6781a31e305c7f4976186d48d9841d0cbe2fdc1711606024399"
+    },
+    "trigger_edges.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\trigger_edges.jsonl",
+      "rows": 24,
+      "sha256": "d48df08885250505756548a1809dff44906436e8cda6300c7023e20fcc371734"
+    },
+    "sync_quality.jsonl": {
+      "path": "C:\\dev\\mrg-v25\\evidence\\v25_8_rc1_local_c2_20260711\\v25_5\\v25_shadow\\fixtures\\sync_quality.jsonl",
+      "rows": 24,
+      "sha256": "bd439df32538696e222229d8620bc627d2e4a93e0c6cf93c46ea900a7aa33614"
+    }
+  }
+}

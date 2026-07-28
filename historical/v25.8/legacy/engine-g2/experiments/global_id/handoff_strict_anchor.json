@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "kind": "global_person_id_experiment_profile",
+  "experiment_id": "v22_gpid_handoff_strict_anchor",
+  "stage": "V22-global-id-handoff-strict",
+  "description": "Stronger handoff birth suppression for camera-overlap ID fragmentation checks.",
+  "target": "shadow",
+  "filter_backend": "alpha_beta",
+  "count_gate_enable": true,
+  "handoff_aware_enable": true,
+  "handoff_match_gate_m": 1.35,
+  "handoff_birth_near_track_suppress_m": 1.25,
+  "handoff_strict_count_lock_enable": true,
+  "handoff_strict_birth_block_m": 3.0,
+  "match_gate_m": 1.25,
+  "lost_match_gate_m": 1.8,
+  "birth_quarantine_enable": true,
+  "birth_confirm_hits": 2,
+  "birth_near_track_suppress_m": 0.85,
+  "duplicate_suppress_enable": true,
+  "duplicate_suppress_dist_m": 1.05
+}

@@ -1,0 +1,35 @@
+{
+  "schema_version": "mrge.historical-release-manifest.v1",
+  "release_mode": "full_public_release_with_authorized_exceptions",
+  "v25_8": {
+    "source_kind": "frozen filesystem snapshot",
+    "included_trees": [
+      "legacy",
+      "datasets",
+      "evidence",
+      "releases",
+      "runtime"
+    ],
+    "excluded_trees": [
+      "components",
+      "workspace",
+      "worktrees"
+    ],
+    "files": 313,
+    "bytes": 9167545,
+    "tree_sha256": "4002a436385e71da700ab745c90d4786582ab243ff652b06a7ebc24b9c04be66"
+  },
+  "v26": {
+    "source_kind": "Git-tracked checkout",
+    "source_commit": "18f453bc887497c73efe3b8ac39ddfe3809b212c",
+    "files": 279,
+    "bytes": 9045679,
+    "tree_sha256": "a4927112c1f898231f4ef38dfd1fecfe5e873b1a28283fcd0c29b6b291b94e46"
+  },
+  "non_redistributable_exceptions": [
+    "vendor SDKs and binaries",
+    "third-party model weights",
+    "credentials, certificates and tokens",
+    "material without confirmed redistribution authority"
+  ]
+}

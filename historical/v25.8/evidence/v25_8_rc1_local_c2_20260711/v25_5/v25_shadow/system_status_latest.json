@@ -1,0 +1,125 @@
+{
+  "mvs_perception": {
+    "schema_version": 1,
+    "component": "mrg-mvs-perception",
+    "state": "ok",
+    "updated_at_ns": 1783752341030396900,
+    "stream_role": "shadow",
+    "authority": "shadow_only",
+    "official_result": false,
+    "source_mode": "file_replay",
+    "input_age_ms": 0.0,
+    "queue_depth": 0,
+    "dropped": 0,
+    "reason": "",
+    "records": 24,
+    "per_camera": {
+      "A": {
+        "records": 3
+      },
+      "B": {
+        "records": 3
+      },
+      "C": {
+        "records": 3
+      },
+      "D": {
+        "records": 3
+      },
+      "E": {
+        "records": 3
+      },
+      "F": {
+        "records": 3
+      },
+      "G": {
+        "records": 3
+      },
+      "H": {
+        "records": 3
+      }
+    }
+  },
+  "event_perception": {
+    "schema_version": 1,
+    "component": "mrg-event-perception",
+    "state": "ok",
+    "updated_at_ns": 1783752341030396900,
+    "stream_role": "shadow",
+    "authority": "shadow_only",
+    "official_result": false,
+    "source_mode": "file_replay",
+    "input_age_ms": 0.0,
+    "queue_depth": 0,
+    "dropped": 0,
+    "reason": "",
+    "records": 24,
+    "per_camera": {
+      "A": {
+        "records": 3
+      },
+      "B": {
+        "records": 3
+      },
+      "C": {
+        "records": 3
+      },
+      "D": {
+        "records": 3
+      },
+      "E": {
+        "records": 3
+      },
+      "F": {
+        "records": 3
+      },
+      "G": {
+        "records": 3
+      },
+      "H": {
+        "records": 3
+      }
+    }
+  },
+  "sync_engine": {
+    "schema_version": 1,
+    "component": "mrg-sync-engine",
+    "state": "ok",
+    "updated_at_ns": 1783752341030396900,
+    "stream_role": "shadow",
+    "authority": "shadow_only",
+    "official_result": false,
+    "source_mode": "file_replay",
+    "input_age_ms": 0.0,
+    "queue_depth": 0,
+    "dropped": 0,
+    "reason": "",
+    "records": 24,
+    "per_camera": {
+      "A": {
+        "records": 3
+      },
+      "B": {
+        "records": 3
+      },
+      "C": {
+        "records": 3
+      },
+      "D": {
+        "records": 3
+      },
+      "E": {
+        "records": 3
+      },
+      "F": {
+        "records": 3
+      },
+      "G": {
+        "records": 3
+      },
+      "H": {
+        "records": 3
+      }
+    }
+  }
+}

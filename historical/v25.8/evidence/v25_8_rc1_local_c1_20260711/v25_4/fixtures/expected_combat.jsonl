@@ -1,0 +1,4 @@
+{"pseudo_hit":true,"reason":"terminal_inside_mask","trajectory_id":"trajectory-terminal-hit","victim_global_id":1}
+{"pseudo_hit":true,"reason":"turn_inside_mask","trajectory_id":"trajectory-turn-hit","victim_global_id":2}
+{"pseudo_hit":false,"reason":"no_key_point_inside_mask","trajectory_id":"trajectory-miss","victim_global_id":null}
+{"pseudo_hit":false,"reason":"human_noise","trajectory_id":"trajectory-human-noise","victim_global_id":null}
