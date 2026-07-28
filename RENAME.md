@@ -12,11 +12,11 @@
 
 ## V25.8–V26 历史公开扩展
 
-本仓库不再只发布最小研究实现。`historical/v25.8/` 与 `historical/v26/` 将保留经筛查的历史源码、部署脚本、配置、真实数据和研发文档，尽可能维持原始目录与可追溯来源；V26 的代码知识图谱将作为同一归档的一部分提交。
+本仓库不再只发布最小研究实现。`historical/v25.8/` 与 `historical/v26/` 保留经筛查的历史源码、部署脚本、配置、真实数据和研发文档，尽可能维持原始目录与可追溯来源；V26 的静态代码知识图谱已发布在 [`historical/knowledge-graph/v26/`](historical/knowledge-graph/v26/)，用于导航模块、层级与已验证的静态关系。
 
 这是一项“全量公开，授权例外”的迁移，而不是把哈希清单误作源码发布：每个未迁入项目必须有明确的例外原因，且其路径、哈希和来源保留在公开排除清单中。真实场地数据和私有部署材料的公开，仅代表维护者声明的公开权利，不构成对安全、隐私、现场表现或生产资格的保证。
 
-当前迁移的文件数量、字节数、树哈希与 V26 固定提交见 [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json)；不可再分发的 V25.8 专有组件、混合工作树和其他授权例外见 [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md)。
+当前迁移的文件数量、字节数、树哈希与 V26 固定提交见 [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json)；图谱来源提交、节点/边数量、分层和导览约束见 [`historical/knowledge-graph/README.md`](historical/knowledge-graph/README.md)；不可再分发的 V25.8 专有组件、混合工作树和其他授权例外见 [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md)。
 
 ## V27 完整目标架构图
 

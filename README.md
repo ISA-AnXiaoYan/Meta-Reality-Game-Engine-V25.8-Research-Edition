@@ -131,6 +131,7 @@ V25.8 是研究基线，V26 的 Recording Bundle、Polygon Gate、可见光回�
 | 历史源码与部署材料 | 维护者确认可公开的 V25.8–V26 原始文件 | 在对应许可证条件下复现、改造和提交改进 |
 | 真实研发数据 | 已纳入历史归档的真实记录与证据材料 | 进行离线研究、回放与再分析；须遵守附带数据说明 |
 | 来源与哈希清单 | [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json) | 校验导入内容、来源快照与 V26 Git 提交 |
+| V26 代码知识图谱 | [`historical/knowledge-graph/v26/`](historical/knowledge-graph/v26/) | 按层级和导览理解 279 个历史文件、2,654 个静态节点与 6,964 条已提取关系 |
 | 授权例外 | [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md) | 识别不可再分发的供应商、凭据、第三方或专有材料 |
 
 本次实际导入由 release manifest 逐文件校验。较早的 pre-V27 2,857 项哈希清单仍保留为 V27 参考审计台账，不能被解读为 V27 源码已发布。
@@ -177,7 +178,7 @@ mrge/                    # 引擎核心、协议、Replay、过滤、预览与�
 contracts/               # Apache-2.0 的公共协议与 Replay 契约
 examples/                # 合成回放样本
 research/variants/       # 可追溯的研究变体与 Profile
-historical/              # V25.8–V26 源码、数据、部署材料、排除项与发布清单
+historical/              # V25.8–V26 源码、数据、部署材料、图谱、排除项与发布清单
 tools/                   # R6 检查、报告和辅助工具
 docs/governance/         # 范围、命名、架构预览与发布治理
 docs/                    # 设计、Replay、Adapter、贡献与安全文档
