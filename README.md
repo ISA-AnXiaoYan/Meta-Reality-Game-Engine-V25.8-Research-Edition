@@ -2,222 +2,377 @@
 
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
 
-[![License: AGPL-3.0-only](https://img.shields.io/badge/engine-AGPL--3.0--only-0f766e.svg)](LICENSES/AGPL-3.0-only.txt)
-[![Contracts and Replay: Apache-2.0](https://img.shields.io/badge/contracts%20%26%20replay-Apache--2.0-2563eb.svg)](LICENSES/Apache-2.0.txt)
+这是仓库根目录的命名、范围与架构入口。
 
-`Meta-Reality-Game-Engine` 是一个面向**元现实互动游戏**的研究型运行时：它把多路可见光、事件流或其他传感输入，组织为可回放、可检查、可复现实验的感知、几何、预览、证据与候选判定链路。
+> 原根目录 README 中的游戏能力、快速开始、Replay 与贡献说明已保留在 [`docs/README-V25.8-LEGACY.md`](docs/README-V25.8-LEGACY.md)，避免与本文件的公开范围、图谱和架构入口重复。
 
-本仓库是 **V25.8 Research Edition**。除研究方法、稳定协议、合成回放和可替换的原创算法实现外，它现在还归档了维护者已确认可公开的 V25.8–V26 历史源码、真实研发数据与私有部署材料。它仍不构成真实场地的生产判定系统。
+- 当前公开版本：**Meta-Reality-Game-Engine-V25.8-Research-Edition**
+- 当前定位：元现实游戏引擎的研究版本，同时作为 V25.8–V26 历史实现、数据与部署材料的公开归档入口；历史代码不因此获得生产 Authority。
+- 分域许可证：`contracts/` 与 Replay 使用 Apache-2.0；引擎、工具与其余未另行声明内容使用 AGPL-3.0-only。
+- 公开模式：维护者已确认其对纳入版本库的 V25.8–V26 自有源码、真实数据和私有部署材料拥有公开权利；迁移过程保留逐文件来源、哈希与例外记录。
+- 不公开的例外：供应商 SDK 或二进制、受第三方再分发限制的模型权重、他人个人数据/身份资料、密钥、证书、令牌、未获授权的网络端点及任何来源或授权仍不清晰的内容。
 
-> **当前状态：Research / Candidate only。**
-> 所有输出均为研究、候选或 Shadow 结果；它们不是比赛、计分、身份确认或安全相关场景的最终权威结论。`implemented`、本地 smoke/replay、独立资格验证、`authority_ready` 与生产切换是彼此独立的状态，不能互相替代。
+## 开源内容总览
 
-## 它能支持什么样的游戏能力？
+这是一个“**研究引擎 + 可复核历史归档**”仓库，而不是把历史代码直接宣称为可投入真实比赛或生产裁决的产品。公共内容分为三层：
 
-在合成数据、文件回放或经由未来独立 Adapter 接入的条件下，本引擎可以作为以下玩法的研究底座：
-
-| 游戏能力 | 引擎如何提供支撑 | 当前边界 |
+| 层级 | 已公开内容 | 用途与边界 |
 | --- | --- | --- |
-| 空间目标互动 | 检测、分割、多相机几何和候选事件 | 仅候选结果，不做正式命中裁决 |
-| 多人协作或对抗 | 以无身份几何轨迹和时间化事实组织交互 | 不含真实身份授权或计分权威 |
-| 躲避、闯关、区域占领 | 区域、路径、接近与穿越等规则研究 | 规则输出须经独立游戏层审核 |
-| 实体道具/球类玩法 | 事件过滤、弹道候选与回放对照 | 不含真实设备和现场标定保证 |
-| 沉浸式叙事与导演系统 | 稀疏事件预览、证据片段和场景状态输入 | Preview 只用于展示，不可反向改写事实 |
-| 赛后复盘与规则调试 | Replay、故障注入、报告与证据包结构 | 不等同于生产审计或裁决证据 |
+| 研究引擎 | `mrge/`、`contracts/`、Replay、几何、过滤、预览与研究 Profile | 供开发者在合成或自有授权环境中复现、派生和验证研究分支；不替代现场资格。 |
+| V25.8–V26 历史归档 | 历史源码、研发数据、部署脚本、配置、证据与发布记录 | 保留可追溯研究上下文，便于回放、迁移、比较与分支研发。 |
+| 可检索知识资产 | V26 静态代码知识图谱、发布清单、哈希、排除清单和治理说明 | 帮助理解模块边界与来源；图谱和清单不替代真实运行、日志、资格或 Authority 证据。 |
 
-这套设计的重点不是把单一模型输出直接变成“游戏真相”，而是让每个结论都能追溯到输入、时间、几何、过滤条件和规则版本，从而支持不同场地、传感器布局与玩法分支的安全研发。
+公开采用“**完整公开，授权例外**”原则：自有且确认可再分发的材料以文件形式发布；供应商 SDK/HAL、二进制、受限权重、凭据、未获授权个人资料和来源不清内容始终排除。许可仍以根目录与文件内的 SPDX/具体声明为准：`contracts/` 与 Replay 为 Apache-2.0，其余未另行声明内容为 AGPL-3.0-only。
 
-## 公开能力概览
+## V25.8–V26 历史公开扩展
 
-| 领域 | 已公开内容 | 典型用途 |
-| --- | --- | --- |
-| Contracts / Replay | Apache-2.0 协议、事件信封、Replay 输入输出结构 | 构建互操作实验工具、回归集和分析器 |
-| 合成运行时 | FakeBackend、2/8 路合成样本、确定性模拟 | 不依赖真实设备复现完整数据流 |
-| 感知接缝 | Polygon / Candidate / Timing schema 与批处理边界 | 替换模型或后处理实现而不改变下游协议 |
-| 过滤与预览 | 热像素、聚类、陈旧结果过滤；稀疏事件预览 | 研究降噪、可视化与证据对照 |
-| 几何分支 | 地面投影、融合、`foot_point` 锚点、四周向中心布局 | 面向不同传感器模组探索空间定位假设 |
-| 治理与可复现 | 环境记录、故障注入、报告、R6 检查器 | 让研究结论具备可复查的边界 |
-| 历史研发资产 | V25.8–V26 的实际源码、研发数据、部署材料、哈希与来源记录 | 复现历史研发、派生分支与审查演进 |
+本仓库不再只发布最小研究实现。`historical/v25.8/` 与 `historical/v26/` 保留经筛查的历史源码、部署脚本、配置、真实数据和研发文档，尽可能维持原始目录与可追溯来源；V26 的静态代码知识图谱已发布在 [`historical/knowledge-graph/v26/`](historical/knowledge-graph/v26/)，用于导航模块、层级与已验证的静态关系。
 
-## 系统整体架构
+这是一项“全量公开，授权例外”的迁移，而不是把哈希清单误作源码发布：每个未迁入项目必须有明确的例外原因，且其路径、哈希和来源保留在公开排除清单中。真实场地数据和私有部署材料的公开，仅代表维护者声明的公开权利，不构成对安全、隐私、现场表现或生产资格的保证。
 
-```mermaid
-flowchart LR
-    S["合成输入 / 文件回放"] --> A["Adapter 边界\nFakeBackend / future plugin"]
-    A --> I["Ingress\n时间化事实与来源记录"]
-    I --> P["Perception\nPolygon / Event Filter / Geometry"]
-    P --> G["Identity-neutral Geometry\nGround projection / fusion"]
-    P --> V["Preview\nSparse event view"]
-    G --> C["Candidate\n研究候选与规则输入"]
-    C --> E["Replay / Report / Evidence\n可回放、可比较、可审查"]
-    V --> E
-    E --> R["Research game layer\n玩法原型、复盘、调参"]
-```
+当前迁移的文件数量、字节数、树哈希与 V26 固定提交见 [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json)；图谱来源提交、节点/边数量、分层和导览约束见 [`historical/knowledge-graph/README.md`](historical/knowledge-graph/README.md)；不可再分发的 V25.8 专有组件、混合工作树和其他授权例外见 [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md)。
 
-架构有四条不可省略的原则：
+## V26 代码知识图谱：使用说明
 
-1. **先事实，后结论。** 传感事实、派生候选、审查结论必须分层保存，不能让 UI 或过滤器回写原始事实。
-2. **先几何，后身份。** 公共代码以无身份的空间事实为核心；任何身份、权限或计分权威都必须在独立的受控层完成。
-3. **先回放，后现场。** 文件回放、合成样本和故障注入是默认验证路径；真实硬件仅能通过未随首发发布的独立 Adapter 接入。
-4. **先证据，后裁决。** 每次研究输出应保留来源、版本、时间和过滤条件；候选输出不得被包装成最终事实。
+V26 图谱位于 [`historical/knowledge-graph/v26/knowledge-graph.json`](historical/knowledge-graph/v26/knowledge-graph.json)，对应固定历史提交 `18f453bc887497c73efe3b8ac39ddfe3809b212c`。它包含 279 个文件级节点、2,654 个静态节点、6,964 条已提取关系、8 个架构层级和 9 步中文导览。
 
-### V25.8 当前实现层
+### 图谱界面示例
 
-| 层 | 公开接口/模块 | 职责 | 不承担的职责 |
-| --- | --- | --- | --- |
-| 输入层 | `mrge.adapters`、`mrge.replay` | 合成输入、文件回放、协议解码 | 真实相机、SDK 或现场设备控制 |
-| 感知层 | `mrge.perception`、Polygon schema | 检测/分割结果的协议化与处理接缝 | 发布模型权重或真实推理服务 |
-| 事件层 | `mrge.filters.*` | 热像素、聚类、陈旧候选等研究过滤 | 改写原始事件或给出权威裁决 |
-| 几何层 | `mrge.geometry`、Geometry schema | 投影、融合、锚点和布局假设 | 现场标定保证或真实身份绑定 |
-| 预览层 | `mrge.preview.sparse_event` | 稀疏事件预览与研究可视化 | 反向控制、最终事实生成 |
-| 候选层 | Candidate schema、规则输入 | 生成可审查的研究候选 | 生产计分、处罚或通行授权 |
-| 治理层 | `tools/r6_release_check.py`、报告与清单 | 复现、风险提示、发布前检查 | 独立认证或生产批准 |
+![V26 代码知识图谱：8 个架构层级与 9 步导览](docs/assets/v26-knowledge-graph-overview.png)
 
-## 从输入到游戏原型的全链路
+上图是“项目概览”视图：卡片表示文件级架构层，右侧是从项目全景到仓库卫生门禁的阅读导览。该图片仅展示静态代码图谱界面，不展示真实数据、硬件画面、运行日志或裁决结果。
 
-```text
-Replay / Synthetic Facts
-  -> protocol validation and provenance
-  -> perception result or event filtering
-  -> ground projection and multi-view fusion
-  -> identity-neutral spatial facts
-  -> game-rule candidate input
-  -> preview, replay report and evidence bundle
-  -> researcher-reviewed game prototype behavior
-```
+### 启用本地图谱查看器
 
-其中 “game-rule candidate input” 只是为玩法层提供可审查输入。例如：一个对象是否进入区域、两条轨迹是否接近、一次事件是否满足研究规则的时间窗。它不是最终命中、积分、身份或安全决策。
-
-## 快速开始
-
-建议使用 Python 3.11 或更新版本，在虚拟环境中执行：
+前提：已克隆本仓库，并安装 Node.js（含 `npx`）。以下 PowerShell 命令在**仓库根目录**执行：它只复制已发布的图谱 JSON 到临时查看目录，并启动仅监听 `127.0.0.1` 的本地查看器；不会启动 V26 运行时、相机、Event HAL 或任何现场服务。
 
 ```powershell
-python -m pip install -e .
-mrge validate
-mrge simulate --frames 1 --cameras 2
-mrge generate-sample --output .\tmp-sample.jsonl --cameras 2
-mrge replay --input examples\quickstart_2cam_synthetic.jsonl --fault stale_polygon
-mrge report --input examples\fullchain_8cam_replay.jsonl --output .\tmp-reports
-python tools\r6_release_check.py
+$viewerRoot = Join-Path $env:TEMP "mrge-v26-knowledge-graph-viewer"
+$uaDir = Join-Path $viewerRoot ".ua"
+New-Item -ItemType Directory -Force -Path $uaDir | Out-Null
+Copy-Item "historical/knowledge-graph/v26/knowledge-graph.json" $uaDir -Force
+Copy-Item "historical/knowledge-graph/v26/meta.json" $uaDir -Force
+Set-Content -LiteralPath (Join-Path $uaDir "config.json") -Encoding utf8 -Value '{"outputLanguage":"zh"}'
+npx --yes "https://github.com/Egonex-AI/Understand-Anything/releases/download/v2.9.4/understand-anything-viewer.tgz" $viewerRoot
 ```
 
-| 示例 | 内容 | 适合验证 |
-| --- | --- | --- |
-| `examples/quickstart_2cam_synthetic.jsonl` | 两路最小合成回放 | 安装、协议与基础 Replay |
-| `examples/fullchain_8cam_replay.jsonl` | 八路全链路合成事实 | 多路时间、过滤、候选与报告链路 |
+终端会打印带一次性访问令牌的 `Dashboard URL`，浏览器会自动打开该地址；如果没有自动打开，请完整复制该 URL（包括 `?token=`）到浏览器。查看完成后直接在终端按 `Ctrl+C` 关闭查看器。图谱文件本身不被改写，也不会上传到外部服务。
 
-`--fault stale_polygon` 用于注入陈旧 Polygon 故障；它是研究回归工具，不代表真实部署的故障覆盖率。
+建议按以下顺序使用：
 
-## 面向不同场地的几何研发分支
+1. 从“项目概览”读取 8 个层级，先确定工作落点，而不要从单一脚本推断整个系统。
+2. 从“项目导览”依次查看启动编排、YOLO 感知、身份/空间融合、命中边界、游戏桥接、Shadow、远程验证和仓库卫生门禁。
+3. 用搜索和“文件”视图定位节点后，回到 `historical/v26/` 阅读实际源码、Profile、配置、测试与记录；以 source commit、release manifest 和实际证据共同复核结论。
+4. 派生新布局或传感器方案时，先将输入、时间基准、几何锚点、输出事实、消费者和 Authority 边界版本化，再修改算法或接入代码。
 
-公开代码支持将“几何假设”显式放入 Profile，而不是隐藏在业务逻辑中。当前研究变体包括：
+图谱是静态导航，不会证明硬件已连接、部署能启动、数据质量合格或命中/身份结果具备 Authority。当前没有可验证的跨批 import map，因此图谱不补造推测性的跨模块依赖边。
 
-| 假设 | 配置/实现线索 | 适用研究问题 |
-| --- | --- | --- |
-| 人体脚点作为定位锚点 | `anchor_mode=foot_point` | 降低人体框中心在地面定位中的系统偏差 |
-| 四周相机向中心观察 | `sensor_layout=four_sides_inward` | 对称场地、交叉视角与中心区域覆盖 |
-| 通用地面投影与融合 | `mrge.geometry` | 比较标定、遮挡和跨视角合并策略 |
-| 历史实验变体 | `research/variants/*` | 派生新场地/新模组条件下的可追溯支线 |
+## V26 历史实现架构图
 
-这些 Profile 是研究假设，并非针对某个真实场地的合格标定配置。新分支应把布局、锚点、时间基准和验证样本一起版本化。
-
-## V25.8–V26 历史归档与授权例外
-
-V25.8 是研究基线，V26 的 Recording Bundle、Polygon Gate、可见光回放、IR-ID、YOLO、事件、预览、融合与部署实现以历史原貌归档在 [`historical/`](historical/)。本轮采用“**完整公开，授权例外**”策略：
-
-| 分类 | 含义 | 社区可如何使用 |
-| --- | --- | --- |
-| 历史源码与部署材料 | 维护者确认可公开的 V25.8–V26 原始文件 | 在对应许可证条件下复现、改造和提交改进 |
-| 真实研发数据 | 已纳入历史归档的真实记录与证据材料 | 进行离线研究、回放与再分析；须遵守附带数据说明 |
-| 来源与哈希清单 | [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json) | 校验导入内容、来源快照与 V26 Git 提交 |
-| V26 代码知识图谱 | [`historical/knowledge-graph/v26/`](historical/knowledge-graph/v26/) | 按层级和导览理解 279 个历史文件、2,654 个静态节点与 6,964 条已提取关系 |
-| 授权例外 | [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md) | 识别不可再分发的供应商、凭据、第三方或专有材料 |
-
-本次实际导入由 release manifest 逐文件校验。较早的 pre-V27 2,857 项哈希清单仍保留为 V27 参考审计台账，不能被解读为 V27 源码已发布。
-
-## 下一版本预告：复用完整架构，不重复造轮子
-
-下一阶段将以 V27 Clean Runtime 的完整体架构为设计输入，保留其已经验证的职责分层，而不是重新堆叠一套平行框架：
+> 这是从已公开 V26 源码、配置、工具与静态知识图谱归纳出的历史结构。它用于理解真实归档内容和寻找迁移切入点；其中供应商接入、模型权重和现场凭据可能仅以外部依赖引用存在，并不随仓库发布。
 
 ```mermaid
 flowchart LR
-    A["Sources A-H\nVisible / Event / optional AIRY"] --> B["Ingress adapters\nsource ownership"]
-    B --> C["Perception\n4-worker Polygon / Event owner / Geometry"]
-    C --> D["Identity-neutral facts\nspatial facts and provenance"]
-    D --> E["Preview and evidence\nreplay, reports, seals"]
-    E --> F["Future governed binding\nprivate admission and authority"]
+    subgraph CONTROL["项目治理、运行配置与编排"]
+        PROFILE["Profiles / 配置 / 发布记录"]
+        LAUNCH["启动器与远程运维"]
+        HYGIENE["测试、实验与仓库卫生"]
+        PROFILE --> LAUNCH
+        HYGIENE --> LAUNCH
+    end
+
+    subgraph INPUT["历史采集与输入边界"]
+        VSDK["外部可见光 SDK / 相机 HAL\n不随仓库发布"]
+        ESDK["外部 Event SDK / HAL\n不随仓库发布"]
+        MVS["MVS 帧接入 / Recording Bundle"]
+        EVENT["Event 窗口 / Trigger / RAW 记录"]
+        VSDK -. "外部依赖" .-> MVS
+        ESDK -. "外部依赖" .-> EVENT
+    end
+
+    subgraph PERCEPTION["感知、跟踪与融合"]
+        YOLO["YOLO Segmentation\nMask / Polygon"]
+        TRACK["Person ID / Runtime Track"]
+        BEV["Homography / BEV / Geometry"]
+        FUSION["预览与多视角融合"]
+        MVS --> YOLO --> TRACK --> BEV
+        YOLO --> FUSION
+        BEV --> FUSION
+    end
+
+    subgraph EVENTPATH["事件与判定研究链路"]
+        DENOISE["Event 过滤 / 预览"]
+        BALLISTIC["弹道候选 / 轨迹"]
+        JUDGE["Hit Judge / Evidence\n历史研究判定"]
+        EVENT --> DENOISE --> BALLISTIC --> JUDGE
+        BEV --> JUDGE
+        YOLO --> JUDGE
+    end
+
+    subgraph OUTPUT["游戏、回放与证据"]
+        GAME["UE5 / Game Bridge"]
+        REPLAY["回放、报告与证据记录"]
+        DATA["历史数据集与实验结果"]
+        JUDGE --> GAME
+        MVS --> REPLAY
+        EVENT --> REPLAY
+        FUSION --> REPLAY
+        JUDGE --> REPLAY
+        DATA --> REPLAY
+    end
+
+    LAUNCH --> MVS
+    LAUNCH --> EVENT
 ```
 
-计划中的复用方向：
+## MRGE 1.0 正式推进版整体架构图
 
-- 使用 Profile 驱动多源接入、布局和策略切换；
-- 保留四路并行 Polygon/后处理的职责边界、事件所有者与稀疏预览模式；
-- 继续以无身份几何事实作为公共层的输出；
-- 将未来的 Admission、Lease、Trust、身份绑定和权威判定置于私有、受治理的扩展层；
-- 从一开始记录 provenance、版本和可回放证据。
+> 此图对应正在推进的 **Meta-Reality Game Engine Version 1.0** 正式架构：以 `MRGE_V1_0_ARCHITECTURE_SPEC.zh-CN.md` v8.1.1 为规范性来源。它是“ACTIVE / APPROVED、IMPLEMENTATION IN_PROGRESS、NOT QUALIFIED”的目标设计，不是 V26 已实现功能清单，也不构成生产切换、真实比赛或裁决 Authority 声明。
 
-不会镜像供应商 Event HAL/相机 SDK、受限模型与权重、密钥/证书或未获授权的第三方材料。历史代码中的生产 Authority/Judge/Game Manager 仅作为历史研究实现公开，不获得现场启用、裁决或身份权威。详细的阶段图、复用边界和“不重复建设”清单见 [RENAME.md](docs/governance/RENAME.md)。
+```mermaid
+flowchart TB
+    GM["Game Manager\n比赛、玩家与装备主身份"]
+    OP["Operator Console\n启动、受控停止、状态"]
+    SELF["Startup Self-Test Window\n只读 Gate 投影"]
+    CFG["Hardware Profile Editor\nMVS / Event 候选配置"]
+    LIFE["Lifecycle Control Service\n意图、状态、监督"]
+    SYNCCTRL["Sync Authority Controller\nReceipt / Term / Fence / WAL"]
 
-## 发布范围与非目标
+    subgraph GOV["执行治理面 EGP：只治理执行元数据"]
+        ACTION["Action Registry\n注册动作与副作用类型"]
+        DAG["Capability DAG\n依赖与 Gate"]
+        ADMIT["Admission Controller\n默认拒绝"]
+        LEASE["Resource Lease Manager\nHardware / GPU / Schema"]
+        TRUST["Trust Domain Registry\nDEV / QUAL / PROD"]
+        RUNNER["Approved Runner\n唯一受批准执行器"]
+        GWAL["Governance Ledger\nAttempt / Admission / Lease / Closeout"]
 
-当前公开范围**不包含**：
+        ACTION --> ADMIT
+        DAG --> ADMIT
+        TRUST --> ADMIT
+        ADMIT --> GWAL
+        ADMIT --> LEASE
+        LEASE --> GWAL
+        LEASE --> RUNNER
+    end
 
-- 供应商 SDK、驱动、二进制和受限第三方模型资产；
-- 密钥、账户、证书、令牌及未获授权的个人数据或网络端点；
-- 未在维护者公开权利声明内的数据、场地资料和部署档案；
-- 将历史代码直接视为生产裁决、正式计分、身份确认、授权通行或安全控制能力的主张；
-- 对真实场地准确率、时延、稳定性或合规性的承诺。
+    subgraph SENSOR["传感与受控传输层"]
+        MVS["MVS A-H\nBayer RAW"]
+        FRAME["Owned Frame Ring"]
+        EVENTHOST["EventOwnershipDomain\n首选单一 EventHalHost 管理 A-H"]
+        EADAPTER["Logical Adapter A-H\n独立线程、Ring、Frontier"]
+        ERING["Owned Event Batch Ring"]
+        EING["EventIngressActor\n每路 Ring 单消费者"]
+        TRIGGER["Raw Trigger Edge Fact"]
+        WINDOW["Owned Event Window Store"]
+        RAWARCHIVE["Event Raw Archive Writer\nProfile 受控的独立副本"]
 
-如果你计划把研究结果接入真实设备或真实玩家，请先完成独立的数据治理、隐私、授权、设备安全、性能、规则与审计评估。公开仓库的通过记录不能替代这些资格过程。
+        MVS --> FRAME
+        EVENTHOST --> EADAPTER --> ERING
+        ERING --> EING
+        EING --> TRIGGER
+        EING --> WINDOW
+        EING --> RAWARCHIVE
+    end
 
-## 仓库导航
+    subgraph AIRY["可选 AIRY 几何辅助：默认关闭、非 Authority"]
+        AIRYHOST["AirySourceHost\n私有 SDK 与单一设备 Owner"]
+        CLOCK["Airy Native Time Bridge\n点级 window_ref"]
+        AIRYOBS["AiryGeometryObservationFact\nparticipant_uid = null"]
+        ASSIST["TrackingAssistFact\nNON_AUTHORITY"]
+        AIRYPROJ["NonAuthorityMotionTrackProjection"]
+        AIRYLEDGER["Optional Capability Ledger"]
+        AIRYSEAL["OptionalCapabilitySeal"]
 
-```text
-mrge/                    # 引擎核心、协议、Replay、过滤、预览与几何模块
-contracts/               # Apache-2.0 的公共协议与 Replay 契约
-examples/                # 合成回放样本
-research/variants/       # 可追溯的研究变体与 Profile
-historical/              # V25.8–V26 源码、数据、部署材料、图谱、排除项与发布清单
-tools/                   # R6 检查、报告和辅助工具
-docs/governance/         # 范围、命名、架构预览与发布治理
-docs/                    # 设计、Replay、Adapter、贡献与安全文档
-LICENSES/                # AGPL-3.0-only 与 Apache-2.0 正文
+        AIRYHOST --> CLOCK --> AIRYOBS --> ASSIST --> AIRYPROJ
+        AIRYOBS --> AIRYLEDGER
+        ASSIST --> AIRYLEDGER
+        AIRYPROJ --> AIRYLEDGER --> AIRYSEAL
+    end
+
+    subgraph AUTH["同步权威闭环"]
+        AWAL["Single-writer Authority WAL"]
+        READY["A-H Ready Barrier"]
+        PREAMBLE["Probe / Fixed Train / Coded Preamble"]
+        RECEIPT["AuthorityReceipt"]
+        BIND["Trigger Binding"]
+        COHORT["A-H Cohort"]
+        GAP["GapFact"]
+        TERM["TerminalReason Registry"]
+        EPOCHSEAL["AuthorityEpochSeal"]
+
+        SYNCCTRL --> AWAL --> READY --> PREAMBLE --> RECEIPT
+        TRIGGER --> BIND --> COHORT
+        RECEIPT --> BIND
+        GAP --> TERM --> EPOCHSEAL
+        COHORT --> EPOCHSEAL
+    end
+
+    subgraph GPU["GPU 感知与融合数据面"]
+        H2D["Pinned H2D Upload"]
+        ISP["CUDA ISP"]
+        YOLO["4× TensorRT Worker\nAB / CD / EF / GH，768×768 FP16"]
+        SEG["GPU Mask / Polygon Primitive"]
+        VTRACK["Visual Runtime Track Builder"]
+        EGUARD["EventPixelDefectGuard"]
+        EVTGPU["GPU Event Denoise\nSparse Point Projection"]
+        TRAJ["Event Ballistic Detection"]
+        WARP["Event-centric Warp"]
+        FUSION["CUDA Fusion Compositor"]
+        SURFACE["GPU Presentation Surface"]
+
+        FRAME --> H2D --> ISP --> YOLO --> SEG --> VTRACK
+        WINDOW --> EGUARD --> EVTGPU --> TRAJ
+        ISP --> WARP
+        SEG --> WARP
+        EVTGPU --> WARP
+        TRAJ --> WARP
+        WARP --> FUSION --> SURFACE
+    end
+
+    subgraph ID["身份、绑定与无身份几何层"]
+        PID["ParticipantIdentityFact\nGame Manager 唯一主身份"]
+        EQUIP["EquipmentIdentityAssignmentFact"]
+        IROBS["IRMarkerObservationFact\n观测，不是玩家身份"]
+        IDBIND["PlayerTrackBindingFact\n有效区间与 disposition"]
+        VGEOM["VisualTrackGeometryFact\n无身份 World / BEV 几何"]
+        PLOC["VisualBaselineLocationFact / Series"]
+        PPOLY["PlayerPolygonBindingFact"]
+
+        GM --> PID --> EQUIP
+        EING --> IROBS
+        EQUIP --> IDBIND
+        IROBS --> IDBIND
+        VTRACK --> IDBIND
+        VTRACK --> VGEOM
+        VGEOM --> PLOC
+        IDBIND --> PLOC
+        IDBIND --> PPOLY
+        SEG --> PPOLY
+        VTRACK -. "只读基线参考" .-> AIRYPROJ
+    end
+
+    subgraph EVIDENCE["语义事实、证据与潜在判定层"]
+        POLY["Polygon Fact"]
+        BALL["BallisticTrajectoryFact"]
+        HEB["HitEvidenceBundle\n仅身份中立引用；未来 Gate"]
+        HIT["HitExistenceFact\n未来独立批准的 Producer"]
+        REL["RelationFact\nsource / target 归因；未来 Gate"]
+        CHAIN["PlayerEvidenceChainIndex\n只索引，不创造事实"]
+        LEDGER["Canonical Ledger"]
+
+        SEG --> POLY
+        TRAJ --> BALL
+        POLY --> HEB
+        BALL --> HEB
+        VGEOM --> HEB
+        HEB -. "仅已批准 Hit Producer" .-> HIT
+        HIT -. "命中存在与归因分离" .-> REL
+        IDBIND -. "有效 source / target 区间" .-> REL
+        PPOLY -. "仅用于归因" .-> REL
+        POLY --> LEDGER
+        BALL --> LEDGER
+        PID --> LEDGER
+        EQUIP --> LEDGER
+        IROBS --> LEDGER
+        IDBIND --> LEDGER
+        PLOC --> LEDGER
+        PPOLY --> LEDGER
+        HEB --> LEDGER
+        BIND --> LEDGER
+        RECEIPT --> LEDGER
+        EPOCHSEAL --> LEDGER
+        PID --> CHAIN
+        IDBIND --> CHAIN
+        PLOC --> CHAIN
+        PPOLY --> CHAIN
+        BALL --> CHAIN
+        HIT --> CHAIN
+        REL --> CHAIN
+        CHAIN --> LEDGER
+    end
+
+    subgraph PRESENT["展示、编码、记录层"]
+        GL["OpenGL Local Preview\n严格只读图层白名单"]
+        NVENC["Hardware Encode Plane"]
+        WEB["HTML5 / WebRTC"]
+        SRT["Main + A-H SRT"]
+        MATCH["Match Evidence Lite"]
+        MATCHSEAL["MatchEvidenceSeal"]
+
+        SURFACE --> GL
+        SURFACE --> NVENC
+        NVENC --> WEB
+        NVENC --> SRT
+        NVENC --> MATCH
+        RAWARCHIVE --> MATCH
+        LEDGER --> MATCH --> MATCHSEAL
+    end
+
+    subgraph REPLAY["标准比赛回放：不重跑算法或判定"]
+        NVDEC["NVDEC MVS Decode"]
+        ERAW["Event RAW Decode"]
+        RFUSE["GPU Replay Fusion"]
+
+        MATCH --> NVDEC --> RFUSE
+        MATCH --> ERAW --> RFUSE
+        MATCH --> RFUSE
+    end
+
+    subgraph REVIEW["独立赛后模型分析与人工复核"]
+        PACK["PostMatch EvidencePack Builder\n命中复盘 / 规则违规复盘"]
+        OUTBOX["Durable Analysis Outbox"]
+        REQ["Provider Payload Adapter\n无网络、无密钥"]
+        EGRESS["Policy Egress Gateway\n唯一网络与密钥 Owner"]
+        CLOUD["Remote API Only\nDeepSeek-V4-Flash 候选"]
+        RESP["Provider Response Adapter\n无网络、无密钥"]
+        VERIFY["Local Schema / Ref / Policy Verifier"]
+        HOPINION["LLMHitOpinionFact\nSHADOW_ONLY"]
+        VOPINION["LLMViolationOpinionFact\nSHADOW_ONLY"]
+        ALEDGER["Analysis Ledger"]
+        CASE["PostMatchReviewCase\n争议 / 规则审计 / 人工请求"]
+        WORKBENCH["Post-Match Review Workbench\nblind-first、独立角色"]
+        HUMAN["HumanArbitrationDecisionFact\nREVIEW_ONLY"]
+        ASEAL["MatchAnalysisSeal"]
+
+        LEDGER -->|"只读引用"| PACK
+        AIRYLEDGER -->|"可选 NON_AUTHORITY 引用"| PACK
+        MATCH -->|"已封存或临时只读输入"| PACK
+        PACK --> OUTBOX --> REQ --> EGRESS --> CLOUD
+        CLOUD --> EGRESS --> RESP --> VERIFY
+        VERIFY --> HOPINION --> ALEDGER
+        VERIFY --> VOPINION --> ALEDGER
+        MATCH --> CASE
+        HOPINION --> CASE
+        VOPINION --> CASE
+        CASE --> WORKBENCH --> HUMAN --> ALEDGER
+        ALEDGER --> ASEAL
+    end
+
+    GM --> LIFE
+    OP -->|"幂等 ControlCommand"| LIFE
+    CFG -->|"ConfigApplyRequest"| LIFE
+    LIFE -->|"ExecutionRequest；无设备句柄"| ADMIT
+    RUNNER -->|"Admission + Hardware Lease + Fence"| SENSOR
+    RUNNER -->|"Admission + GPU Lease"| GPU
+    RUNNER -->|"仅请求 Receipt；无签名密钥"| SYNCCTRL
+    LIFE -->|"SelfTestRunFact / Status"| SELF
+    GWAL -. "只读治理状态" .-> SELF
+    SENSOR -. "Ready / Readback" .-> SELF
+    AUTH -. "Gate / Receipt" .-> SELF
+    GL -->|"只读展示"| OP
 ```
 
-推荐阅读顺序：
+## 开发复用边界
 
-1. [开放范围与命名/架构预览](docs/governance/RENAME.md)
-2. [架构说明](docs/ARCHITECTURE.md)
-3. [Replay 规范](docs/REPLAY_SPEC.md)
-4. [Adapter 协议](docs/ADAPTER_PROTOCOL.md)
-5. [贡献指南](CONTRIBUTING.md) 与 [安全策略](SECURITY.md)
+| 结构 | 应复用的边界 | 禁止的捷径 |
+|---|---|---|
+| 执行治理 | Action Registry → Admission → Lease → Approved Runner | 读取图像/Event 负载、写 Authority WAL、持有设备句柄或签名密钥 |
+| Event 接入 | 单一物理 Owner、A-H 独立 Adapter/Ring/Frontier、Raw→Sanitized 分流 | 多 Owner 争抢设备、让 Raw CD 直接进入算法、合并多路 Source Frontier |
+| 感知与预览 | 四 Worker 感知、Authority No-Loss 与 Preview Latest-Wins 分离 | 为显示或编码丢弃事实、由 Preview 反压 Authority |
+| 身份与几何 | Game Manager 签发 `participant_uid`；几何先无身份，再在有效窗口绑定 | 用 IR code、track、AIRY、相机编号或 LLM 直接生成玩家身份 |
+| 命中与归因 | `HitEvidenceBundle → HitExistence → Relation` 的存在/归因拆分 | 以玩家接近、身份或模型意见跳过 Hit existence |
+| AIRY | 默认 `DISABLED`，可选 `SHADOW/AUGMENT`，独立 Optional Seal | 改写基线位置、身份绑定、Hit/Relation、AuthorityReceipt 或 Base qualification |
+| 回放与复核 | 标准 Replay 只消费已记录内容；模型/人工只读封存证据 | 标准回放重跑模型/算法，或让 LLM/人工改写比赛状态 |
 
-## 许可证
-
-本仓库采用分域许可：
-
-| 内容 | 许可证 |
-| --- | --- |
-| 引擎实现、工具、研究代码与文档（除另有声明） | [AGPL-3.0-only](LICENSES/AGPL-3.0-only.txt) |
-| `contracts/` 与 Replay 契约 | [Apache-2.0](LICENSES/Apache-2.0.txt) |
-
-适用边界、例外与第三方归属以 [LICENSE.md](LICENSE.md)、[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和各文件 SPDX 标识为准。商业、封闭部署或其他授权需求，请通过仓库维护者公开渠道联系。
-
-## 贡献与研究纪律
-
-欢迎贡献可复现的协议、合成样本、过滤/几何变体、文档与测试。提交前请确保：
-
-- 历史归档数据必须附带公开权利与来源记录；不得提交密钥、权重、未获授权的个人数据或第三方受限资产；
-- 为新的研究结论提供可运行的合成回放、明确 Profile 和预期输出；
-- 不把 Preview、Shadow 或 Candidate 状态描述为最终权威；
-- 尊重分域许可证，并记录第三方依赖、来源和适用限制；
-- 在 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) 的约束下协作。
-
-## 发布状态
-
-当前公开基线是 V25.8 Research Edition；`pre-v27-original-audit.1` 为本地候选审计标签，表示范围与清单检查的一个研究快照，不是独立资格认证或生产 Release。R6 检查器可验证公开仓库的结构性约束，但不能证明真实硬件、真实数据、现场性能、外部许可或生产权威状态。
-
----
-
-Meta-Reality-Game-Engine 的目标是让社区能够在清晰边界内研究“现实空间如何成为可回放、可解释、可派生的游戏输入”，同时把真实世界系统应有的安全、隐私与权威责任留在它们应被独立验证的地方。
+完整的命名映射、阶段路线、pre-V27 迁移规则与发布治理见 [docs/governance/RENAME.md](docs/governance/RENAME.md)。根目录文件直接展示 V26 历史结构与 MRGE 1.0 目标架构，治理目录保留细化规则。
