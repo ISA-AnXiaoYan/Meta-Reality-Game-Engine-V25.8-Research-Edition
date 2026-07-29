@@ -3,7 +3,7 @@
   "repository": "Meta-Reality-Game-Engine-Research-Edition",
   "default_branch": "main",
   "research_package_version": "0.2.0.dev0",
-  "release_tag": "v0.2.0-research.0",
+  "release_tag": "v0.2.0-research.1",
   "release_state": "R6-validated",
   "r6_validation": {
     "pytest": "16 passed",

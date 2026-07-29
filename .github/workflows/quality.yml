@@ -44,6 +44,7 @@ jobs:
       - name: Run synthetic quick start
         shell: pwsh
         run: |
+          New-Item -ItemType Directory -Force -Path .\out | Out-Null
           mrge validate
           mrge generate-sample --output .\out\sample.jsonl --cameras 2 --frames 6
           mrge report --input .\out\sample.jsonl --output .\out\reports
