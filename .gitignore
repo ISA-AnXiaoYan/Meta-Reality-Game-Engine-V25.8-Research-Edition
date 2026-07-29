@@ -9,4 +9,5 @@ data/
 weights/
 archives/
 runtime/
+out/
 *.log
