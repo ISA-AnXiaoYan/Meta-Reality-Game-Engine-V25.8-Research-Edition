@@ -8,3 +8,4 @@ expression = "AGPL-3.0-only"
 "contracts/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }
 "replay/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }
 "src/replay/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }
+"research/geometry_profiles/**" = { SPDX-FileCopyrightText = "ISA-AnXiaoYan", SPDX-License-Identifier = "Apache-2.0" }

@@ -1,0 +1,22 @@
+{
+  "schema": "mrge.historical-license-audit.v1",
+  "scope": "V25.8–V26 frozen public archive",
+  "policy": "file-specific notices take precedence; excluded material is recorded separately",
+  "included": {
+    "source": "maintainer-declared authorized historical source and research records",
+    "default_license": "AGPL-3.0-only unless a retained file says otherwise"
+  },
+  "excluded": [
+    "supplier SDK and binary artifacts",
+    "model weights",
+    "credentials and certificates",
+    "unlicensed or unclear-provenance material",
+    "explicitly proprietary source trees listed in EXCLUSIONS.md"
+  ],
+  "not_a_claim": [
+    "third-party license clearance beyond retained notices",
+    "production readiness",
+    "hardware qualification",
+    "independent data-use license"
+  ]
+}

@@ -1,5 +1,4 @@
 {
-  "SPDX-License-Identifier": "AGPL-3.0-only",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
   "version": 1,
@@ -7,9 +6,14 @@
     "component": {
       "type": "application",
       "name": "meta-reality-game-engine-research",
-      "version": "25.8.0.dev0",
+      "version": "0.2.0.dev0",
       "licenses": [{"license": {"id": "AGPL-3.0-only"}}]
-    }
+    },
+    "properties": [
+      {"name": "mrge:scope", "value": "supported Python research package only"},
+      {"name": "mrge:historical_archive", "value": "excluded from dependency inventory; see historical/LICENSE_AUDIT.json"},
+      {"name": "mrge:runtime_dependencies", "value": "none"}
+    ]
   },
   "components": []
 }

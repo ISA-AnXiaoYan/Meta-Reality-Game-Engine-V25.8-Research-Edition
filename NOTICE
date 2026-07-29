@@ -1,5 +1,8 @@
-Meta-Reality-Game-Engine V25.8 Research Edition
+Meta-Reality Game Engine — Research Edition
 
-This research edition is maintained by ISA-AnXiaoYan. It is not a production
-adjudication system and contains no real hardware adapters, real datasets, or
-model weights in the first release.
+This repository contains a supported synthetic research package and an authorized,
+frozen V25.8–V26 historical archive. It is not a production adjudication,
+competition referee, safety-certified or Authority-ready system.
+
+Supplier SDKs/binaries, model weights, credentials and unapproved material are
+not distributed. Historical data is subject to docs/data/DATA_POLICY.md.

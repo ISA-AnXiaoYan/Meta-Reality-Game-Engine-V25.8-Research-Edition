@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "meta-reality-game-engine-research"
-version = "25.8.0.dev0"
-description = "Meta-Reality Game Engine V25.8 Research Edition"
+version = "0.2.0.dev0"
+description = "Meta-Reality Game Engine public research foundation"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "AGPL-3.0-only" }

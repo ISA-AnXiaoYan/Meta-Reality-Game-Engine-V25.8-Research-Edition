@@ -1,4 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-"""MRGE research edition public namespace."""
+"""MRGE public research namespace."""
 
-__version__ = "25.8.0.dev0"
+__version__ = "0.2.0.dev0"

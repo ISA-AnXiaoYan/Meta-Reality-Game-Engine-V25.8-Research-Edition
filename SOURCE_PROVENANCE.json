@@ -1,29 +1,32 @@
 {
-  "schema_version": "1",
-  "edition": "V25.8-Research-Edition",
-  "source_policy": "clean-room research scaffold; no historical runtime source copied",
-  "files": {
-    "contracts.py": {"origin": "new", "license": "Apache-2.0"},
-    "replay/jsonl.py": {"origin": "new", "license": "Apache-2.0"},
-    "src/mrge": {"origin": "new", "license": "AGPL-3.0-only"}
-    ,"contracts/recording_bundle.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
-    ,"contracts/polygon_gate.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
-    ,"contracts/ir_id.schema.json": {"origin": "new public interface", "license": "Apache-2.0"}
-    ,"tools/build_synthetic_sample.py": {"origin": "new deterministic generator", "license": "AGPL-3.0-only"}
-    ,"provenance/PRE_V27_CUTOFF_MANIFEST.json": {"origin": "new audit boundary record", "license": "AGPL-3.0-only"}
-    ,"provenance/ORIGINALITY_CLASSIFICATION.csv": {"origin": "new audit classification", "license": "AGPL-3.0-only"}
-    ,"docs/architecture/PRE_V27_SCOPE.md": {"origin": "new scope documentation", "license": "AGPL-3.0-only"}
-    ,"provenance/PRE_V27_FILE_INVENTORY.csv": {"origin": "hash-only source inventory generated from approved audit roots", "license": "AGPL-3.0-only"}
-    ,"tools/build_pre_v27_inventory.py": {"origin": "new hash-only inventory generator", "license": "AGPL-3.0-only"}
-    ,"src/mrge/filters": {"origin": "clean-room research reimplementation from public contracts and project behavior", "license": "AGPL-3.0-only"}
-    ,"src/mrge/preview": {"origin": "clean-room research reimplementation from public contracts and project behavior", "license": "AGPL-3.0-only"}
-    ,"docs/algorithms/ORIGINAL_PREVIEW_FILTERS.md": {"origin": "new algorithm provenance documentation", "license": "AGPL-3.0-only"}
-    ,"contracts/geometry_profile.schema.json": {"origin": "new coordinate-neutral public contract", "license": "Apache-2.0"}
-    ,"src/mrge/geometry": {"origin": "new profile-driven clean-room geometry implementation", "license": "AGPL-3.0-only"}
-    ,"docs/architecture/GEOMETRY_PROFILES.md": {"origin": "new geometry variation documentation", "license": "AGPL-3.0-only"}
-    ,"research/geometry_profiles": {"origin": "new public geometry profiles", "license": "Apache-2.0"}
-    ,"research/variants": {"origin": "new research variant governance and status templates", "license": "AGPL-3.0-only"}
-    ,"docs/releases/PRE_V27_ORIGINAL_CODE_ROLLOUT.md": {"origin": "new rollout documentation", "license": "AGPL-3.0-only"}
-    ,"provenance/PRE_V27_LOCAL_CANDIDATE_CHECK.json": {"origin": "local candidate verification record", "license": "AGPL-3.0-only"}
+  "schema_version": "2",
+  "repository": "Meta-Reality-Game-Engine-Research-Edition",
+  "public_policy": "supported clean-room research package plus frozen authorized historical archive",
+  "active_research_package": {
+    "paths": ["src/mrge", "contracts", "replay", "examples", "research"],
+    "origin": "public research implementation and contracts",
+    "license_boundary": "See LICENSES/LICENSE-MAP.md"
+  },
+  "historical_archive": {
+    "paths": ["historical/v25.8", "historical/v26", "historical/knowledge-graph"],
+    "origin": "maintainer-declared authorized V25.8–V26 source, records, configuration and deployment history",
+    "integrity_record": "historical/RELEASE_MANIFEST.json",
+    "exclusions": "historical/EXCLUSIONS.md",
+    "license_audit": "historical/LICENSE_AUDIT.json",
+    "support_status": "historical/SUPPORT_STATUS.md"
+  },
+  "excluded": [
+    "supplier SDKs and binaries",
+    "model weights",
+    "credentials, certificates and tokens",
+    "unauthorized personal material",
+    "unlicensed or unclear-provenance material",
+    "explicitly proprietary source trees"
+  ],
+  "authority_boundary": {
+    "qualification_claimed": false,
+    "field_effectiveness_validated": false,
+    "production_cutover": false,
+    "authority": "research-only"
   }
 }

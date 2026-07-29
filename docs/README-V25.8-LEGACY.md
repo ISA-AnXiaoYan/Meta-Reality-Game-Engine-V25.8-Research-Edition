@@ -2,8 +2,8 @@
 
 <!-- SPDX-License-Identifier: AGPL-3.0-only -->
 
-[![License: AGPL-3.0-only](https://img.shields.io/badge/engine-AGPL--3.0--only-0f766e.svg)](LICENSES/AGPL-3.0-only.txt)
-[![Contracts and Replay: Apache-2.0](https://img.shields.io/badge/contracts%20%26%20replay-Apache--2.0-2563eb.svg)](LICENSES/Apache-2.0.txt)
+[![License: AGPL-3.0-only](https://img.shields.io/badge/engine-AGPL--3.0--only-0f766e.svg)](../../LICENSES/AGPL-3.0-only.txt)
+[![Contracts and Replay: Apache-2.0](https://img.shields.io/badge/contracts%20%26%20replay-Apache--2.0-2563eb.svg)](../../LICENSES/Apache-2.0.txt)
 
 `Meta-Reality-Game-Engine` 是一个面向**元现实互动游戏**的研究型运行时：它把多路可见光、事件流或其他传感输入，组织为可回放、可检查、可复现实验的感知、几何、预览、证据与候选判定链路。
 
@@ -124,15 +124,15 @@ python tools\r6_release_check.py
 
 ## V25.8–V26 历史归档与授权例外
 
-V25.8 是研究基线，V26 的 Recording Bundle、Polygon Gate、可见光回放、IR-ID、YOLO、事件、预览、融合与部署实现以历史原貌归档在 [`historical/`](historical/)。本轮采用“**完整公开，授权例外**”策略：
+V25.8 是研究基线，V26 的 Recording Bundle、Polygon Gate、可见光回放、IR-ID、YOLO、事件、预览、融合与部署实现以历史原貌归档在 [`historical/`](../historical/)。本轮采用“**完整公开，授权例外**”策略：
 
 | 分类 | 含义 | 社区可如何使用 |
 | --- | --- | --- |
 | 历史源码与部署材料 | 维护者确认可公开的 V25.8–V26 原始文件 | 在对应许可证条件下复现、改造和提交改进 |
 | 真实研发数据 | 已纳入历史归档的真实记录与证据材料 | 进行离线研究、回放与再分析；须遵守附带数据说明 |
-| 来源与哈希清单 | [`historical/RELEASE_MANIFEST.json`](historical/RELEASE_MANIFEST.json) | 校验导入内容、来源快照与 V26 Git 提交 |
-| V26 代码知识图谱 | [`historical/knowledge-graph/v26/`](historical/knowledge-graph/v26/) | 按层级和导览理解 279 个历史文件、2,654 个静态节点与 6,964 条已提取关系 |
-| 授权例外 | [`historical/EXCLUSIONS.md`](historical/EXCLUSIONS.md) | 识别不可再分发的供应商、凭据、第三方或专有材料 |
+| 来源与哈希清单 | [`historical/RELEASE_MANIFEST.json`](../historical/RELEASE_MANIFEST.json) | 校验导入内容、来源快照与 V26 Git 提交 |
+| V26 代码知识图谱 | [`historical/knowledge-graph/v26/`](../historical/knowledge-graph/v26/) | 按层级和导览理解 279 个历史文件、2,654 个静态节点与 6,964 条已提取关系 |
+| 授权例外 | [`historical/EXCLUSIONS.md`](../historical/EXCLUSIONS.md) | 识别不可再分发的供应商、凭据、第三方或专有材料 |
 
 本次实际导入由 release manifest 逐文件校验。较早的 pre-V27 2,857 项哈希清单仍保留为 V27 参考审计台账，不能被解读为 V27 源码已发布。
 
@@ -157,7 +157,7 @@ flowchart LR
 - 将未来的 Admission、Lease、Trust、身份绑定和权威判定置于私有、受治理的扩展层；
 - 从一开始记录 provenance、版本和可回放证据。
 
-不会镜像供应商 Event HAL/相机 SDK、受限模型与权重、密钥/证书或未获授权的第三方材料。历史代码中的生产 Authority/Judge/Game Manager 仅作为历史研究实现公开，不获得现场启用、裁决或身份权威。详细的阶段图、复用边界和“不重复建设”清单见 [RENAME.md](docs/governance/RENAME.md)。
+不会镜像供应商 Event HAL/相机 SDK、受限模型与权重、密钥/证书或未获授权的第三方材料。历史代码中的生产 Authority/Judge/Game Manager 仅作为历史研究实现公开，不获得现场启用、裁决或身份权威。详细的阶段图、复用边界和“不重复建设”清单见 [当前架构说明](architecture/CURRENT_RESEARCH.md)。
 
 ## 发布范围与非目标
 
@@ -187,11 +187,11 @@ LICENSES/                # AGPL-3.0-only 与 Apache-2.0 正文
 
 推荐阅读顺序：
 
-1. [开放范围与命名/架构预览](docs/governance/RENAME.md)
-2. [架构说明](docs/ARCHITECTURE.md)
-3. [Replay 规范](docs/REPLAY_SPEC.md)
-4. [Adapter 协议](docs/ADAPTER_PROTOCOL.md)
-5. [贡献指南](CONTRIBUTING.md) 与 [安全策略](SECURITY.md)
+1. [公开范围与版本](governance/VERSIONING.md)
+2. [架构说明](architecture/CURRENT_RESEARCH.md)
+3. [Replay 使用](GETTING_STARTED.md)
+4. [Adapter 与契约](../contracts/README.md)
+5. [贡献指南](../CONTRIBUTING.md) 与 [安全策略](../SECURITY.md)
 
 ## 许可证
 
@@ -199,10 +199,10 @@ LICENSES/                # AGPL-3.0-only 与 Apache-2.0 正文
 
 | 内容 | 许可证 |
 | --- | --- |
-| 引擎实现、工具、研究代码与文档（除另有声明） | [AGPL-3.0-only](LICENSES/AGPL-3.0-only.txt) |
-| `contracts/` 与 Replay 契约 | [Apache-2.0](LICENSES/Apache-2.0.txt) |
+| 引擎实现、工具、研究代码与文档（除另有声明） | [AGPL-3.0-only](../LICENSES/AGPL-3.0-only.txt) |
+| `contracts/` 与 Replay 契约 | [Apache-2.0](../LICENSES/Apache-2.0.txt) |
 
-适用边界、例外与第三方归属以 [LICENSE.md](LICENSE.md)、[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 和各文件 SPDX 标识为准。商业、封闭部署或其他授权需求，请通过仓库维护者公开渠道联系。
+适用边界、例外与第三方归属以 [LICENSE](../LICENSE)、[THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) 和各文件 SPDX 标识为准。商业、封闭部署或其他授权需求，请通过仓库维护者公开渠道联系。
 
 ## 贡献与研究纪律
 
@@ -212,7 +212,7 @@ LICENSES/                # AGPL-3.0-only 与 Apache-2.0 正文
 - 为新的研究结论提供可运行的合成回放、明确 Profile 和预期输出；
 - 不把 Preview、Shadow 或 Candidate 状态描述为最终权威；
 - 尊重分域许可证，并记录第三方依赖、来源和适用限制；
-- 在 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) 的约束下协作。
+- 在 [CONTRIBUTING.md](../CONTRIBUTING.md) 与 [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md) 的约束下协作。
 
 ## 发布状态
 

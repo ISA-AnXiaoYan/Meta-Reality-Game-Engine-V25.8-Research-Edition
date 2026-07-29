@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: "If this research edition supports your work, please cite it."
-title: "Meta-Reality-Game-Engine V25.8 Research Edition"
-version: "25.8.0-research"
+title: "Meta-Reality Game Engine — Research Edition"
+version: "0.2.0"
 type: software
 authors:
   - family-names: "AnXiaoYan"
     given-names: "ISA"
-repository-code: "https://github.com/ISA-AnXiaoYan/Meta-Reality-Game-Engine-V25.8-Research-Edition"
+repository-code: "https://github.com/ISA-AnXiaoYan/Meta-Reality-Game-Engine-Research-Edition"
 license: "AGPL-3.0-only"

@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+name: Bug report
+description: Report a reproducible problem in the supported public research package.
+title: "[bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, private data, supplier SDK files or production endpoints.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include the supported surface and expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide a minimal synthetic or public Replay-based reproduction.
+      placeholder: |
+        python -m pytest -q
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Evidence boundary
+      description: State whether this is synthetic, Replay or historical-reference evidence.
+    validations:
+      required: true

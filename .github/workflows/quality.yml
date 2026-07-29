@@ -25,5 +25,26 @@ jobs:
           python -m pip install -e . pytest
       - name: Run contract and replay tests
         run: python -m pytest -q
+      - name: Check repository-local Markdown links
+        run: python tools/check_markdown_links.py
+      - name: Check governance metadata
+        run: python tools/check_governance.py
       - name: Run R6 hygiene checks
         run: python tools/r6_release_check.py
+
+  windows-quickstart:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install public research package
+        run: python -m pip install -e .
+      - name: Run synthetic quick start
+        shell: pwsh
+        run: |
+          mrge validate
+          mrge generate-sample --output .\out\sample.jsonl --cameras 2 --frames 6
+          mrge report --input .\out\sample.jsonl --output .\out\reports
+          if (-not (Test-Path .\out\reports\hit_candidate_report.json)) { throw "Expected research report was not produced" }

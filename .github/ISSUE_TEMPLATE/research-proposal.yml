@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+name: Research proposal
+description: Propose a reproducible public research direction, contract or profile.
+title: "[research]: "
+labels: [research]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Research question
+      description: What problem or capability should be studied?
+    validations:
+      required: true
+  - type: textarea
+    id: interface
+    attributes:
+      label: Inputs, outputs and contracts
+      description: Describe data inputs, output facts, consumers and versioned contracts.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Authority and data boundary
+      description: Explain why the proposal does not create a production Authority or import unauthorized data.
+    validations:
+      required: true

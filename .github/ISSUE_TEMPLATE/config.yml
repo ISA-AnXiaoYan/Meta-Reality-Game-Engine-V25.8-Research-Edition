@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/ISA-AnXiaoYan/Meta-Reality-Game-Engine-Research-Edition/security/advisories/new
+    about: Do not report credentials, private data or security vulnerabilities in public issues.

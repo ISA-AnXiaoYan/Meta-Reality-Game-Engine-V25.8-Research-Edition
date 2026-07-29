@@ -40,7 +40,7 @@ def main() -> int:
         if (
             not is_historical
             and path.suffix in CODE_SUFFIXES
-            and path.name not in {"pyproject.toml", "RESEARCH_RELEASE_MANIFEST.json", "SOURCE_PROVENANCE.json", "RENAME_APPROVAL.json"}
+            and path.name not in {"pyproject.toml", "RESEARCH_RELEASE_MANIFEST.json", "SOURCE_PROVENANCE.json", "SBOM.json", "RENAME_APPROVAL.json"}
         ):
             if "SPDX-License-Identifier" not in text:
                 missing_spdx.append(str(relative))
