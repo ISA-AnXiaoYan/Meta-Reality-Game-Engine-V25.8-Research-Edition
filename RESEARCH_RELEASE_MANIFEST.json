@@ -4,7 +4,13 @@
   "default_branch": "main",
   "research_package_version": "0.2.0.dev0",
   "release_tag": "v0.2.0-research.0",
-  "release_state": "R6-ready-after-current-tree-validation",
+  "release_state": "R6-validated",
+  "r6_validation": {
+    "pytest": "16 passed",
+    "markdown_links": "PASS",
+    "governance_metadata": "PASS",
+    "repository_hygiene": "PASS"
+  },
   "historical_coverage": "V25.8–V26.6 frozen authorized archive",
   "qualification_claimed": false,
   "field_effectiveness_validated": false,
