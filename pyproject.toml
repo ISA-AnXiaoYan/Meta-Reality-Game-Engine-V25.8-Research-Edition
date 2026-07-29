@@ -10,7 +10,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "AGPL-3.0-only" }
 authors = [{ name = "ISA-AnXiaoYan" }]
-dependencies = []
+dependencies = [
+    "tomli>=2.0; python_version < '3.11'",
+]
 
 [project.scripts]
 mrge = "mrge.cli.main:main"
